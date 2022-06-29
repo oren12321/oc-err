@@ -7,18 +7,18 @@
 
 TEST(Errors_test, core_expect_not_throwing_exception_when_condition_is_true)
 {
-    EXPECT_NO_THROW(THROW_IF_FALSE(0 == 0, std::runtime_error));
+    EXPECT_NO_THROW(MEMOC_THROW_IF_FALSE(0 == 0, std::runtime_error));
 }
 
 TEST(Errors_test, core_except_throws_specified_exception_when_condition_fails)
 {
-    EXPECT_THROW(THROW_IF_FALSE(0 == 1, std::runtime_error), std::runtime_error);
+    EXPECT_THROW(MEMOC_THROW_IF_FALSE(0 == 1, std::runtime_error), std::runtime_error);
 }
 
 TEST(Errors_test, core_expect_throws_an_exception_with_specific_description)
 {
     try {
-        THROW_IF_FALSE(0 == 1, std::runtime_error, "some message with optional %d value", 0);
+        MEMOC_THROW_IF_FALSE(0 == 1, std::runtime_error, "some message with optional %d value", 0);
         FAIL();
     }
     catch (const std::runtime_error& ex) {
