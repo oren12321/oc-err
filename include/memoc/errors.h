@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <cstdio>
 
-namespace memoc::errors {
+namespace memoc {
     namespace details {
         template <typename T, std::size_t Buffer_size = 256>
         void format_and_throw(const char* condition, const char* exception_type, int line, const char* function, const char* file, const char* format = nullptr, ...)
@@ -33,12 +33,12 @@ namespace memoc::errors {
 #ifdef __unix__
 #define MEMOC_THROW_IF_FALSE(condition,exception_type,...) \
     if(!(condition)) { \
-        memoc::errors::details::format_and_throw<exception_type>(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__ __VA_OPT__(, __VA_ARGS__)); \
+        memoc::details::format_and_throw<exception_type>(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__ __VA_OPT__(, __VA_ARGS__)); \
     }
 #elif defined(_WIN32) || defined(_WIN64)
 #define MEMOC_THROW_IF_FALSE(condition,exception_type,...) \
     if(!(condition)) { \
-        memoc::errors::details::format_and_throw<exception_type>(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__, __VA_ARGS__); \
+        memoc::details::format_and_throw<exception_type>(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__, __VA_ARGS__); \
     }
 #endif
 
