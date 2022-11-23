@@ -27,3 +27,8 @@ TEST(Errors_test, core_expect_throws_an_exception_with_specific_description)
     }
 }
 
+TEST(Errors_cpp_test, format)
+{
+    MEMOCPP_THROW_IF_FALSE(0 == 1, std::invalid_argument, << "zero is not" << " equal to one");
+}
+
