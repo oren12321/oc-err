@@ -29,12 +29,20 @@ TEST(Errors_test, core_expect_throws_an_exception_with_specific_description)
 
 TEST(Errors_cpp_test, core_expect_not_throwing_exception_when_condition_is_true)
 {
+#ifdef __unix__
+    EXPECT_NO_THROW((MEMOCPP_THROW_IF_FALSE(0 == 0, std::runtime_error)));
+#elif defined(_WIN32) || defined(_WIN64)
     EXPECT_NO_THROW(MEMOCPP_THROW_IF_FALSE(0 == 0, std::runtime_error));
+#endif
 }
 
 TEST(Errors_cpp_test, core_except_throws_specified_exception_when_condition_fails)
 {
+#ifdef __unix__
+    EXPECT_THROW((MEMOCPP_THROW_IF_FALSE(0 == 1, std::runtime_error)), std::runtime_error);
+#elif defined(_WIN32) || defined(_WIN64)
     EXPECT_THROW(MEMOCPP_THROW_IF_FALSE(0 == 1, std::runtime_error), std::runtime_error);
+#endif
 }
 
 TEST(Errors_cpp_test, core_expect_throws_an_exception_with_specific_description)

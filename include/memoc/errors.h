@@ -71,7 +71,7 @@ namespace memoc {
 #define _NTH_ARG(_0,_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,N,...) N
 // ## deletes preceding comma if _VA_ARGS__ is empty (GCC, Clang)
 #define _VA_NARGS(...) _NTH_ARG(_,##__VA_ARGS__,10,9,8,7,6,5,4,3,2,1,0)
-#else
+#elif defined(_WIN32) || defined(_WIN64)
 #define _EXPAND(x) x
 #define _NTH_ARG(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,N,...) N
 #define _NARGS_1(...) _EXPAND(_NTH_ARG(__VA_ARGS__,10,9,8,7,6,5,4,3,2,1,0))
@@ -81,7 +81,7 @@ namespace memoc {
 #endif
 
 #define MEMOCPP_THROW_IF_FALSE(condition,exception_type,...) \
-    if (!(condition)) { \
+    {if (!(condition)) { \
         constexpr std::size_t length{256}; \
         char buffer[length]; \
         memoc::details::Custom_streambuf<char> csb{ buffer, length }; \
@@ -93,7 +93,7 @@ namespace memoc {
         std::size_t wsize{ csb.written_size() }; \
         buffer[wsize < length ? wsize : length - 1] = '\0'; \
         throw exception_type{buffer}; \
-    }
+    }}
 
 #endif // MEMOC_ERRORS_H
 
