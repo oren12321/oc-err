@@ -67,19 +67,19 @@ namespace memoc {
     }
 }
 
-// Supports 1-10 arguments
 #ifdef __unix__
-#define VA_NARGS_IMPL(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, N, ...) N
+#define _NTH_ARG(_0,_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,N,...) N
 // ## deletes preceding comma if _VA_ARGS__ is empty (GCC, Clang)
-#define VA_NARGS(...) VA_NARGS_IMPL(_, ## __VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
+#define _VA_NARGS(...) _NTH_ARG(_,##__VA_ARGS__,10,9,8,7,6,5,4,3,2,1,0)
 #else
-#define EXPAND(x) x
-#define __NARGS(_1, _2, _3, _4, _5, VAL, ...) VAL
-#define NARGS_1(...) EXPAND(__NARGS(__VA_ARGS__, 4, 3, 2, 1, 0))
+#define _EXPAND(x) x
+#define _NTH_ARG(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,N,...) N
+#define _NARGS_1(...) _EXPAND(_NTH_ARG(__VA_ARGS__,10,9,8,7,6,5,4,3,2,1,0))
+#define _AUGMENTER(...) unused,__VA_ARGS__
 
-#define AUGMENTER(...) unused, __VA_ARGS__
-#define VA_NARGS(...) NARGS_1(AUGMENTER(__VA_ARGS__))
+#define _VA_NARGS(...) _NARGS_1(_AUGMENTER(__VA_ARGS__))
 #endif
+
 #define MEMOCPP_THROW_IF_FALSE(condition,exception_type,...) \
     if (!(condition)) { \
         constexpr std::size_t length{256}; \
@@ -87,11 +87,10 @@ namespace memoc {
         memoc::details::Custom_streambuf<char> csb{ buffer, length }; \
         std::ostream os{&csb}; \
         memoc::details::format_error_prefix(os, #condition, #exception_type, __LINE__, __FUNCTION__, __FILE__); \
-        if (VA_NARGS(__VA_ARGS__) > 0) { \
+        if (_VA_NARGS(__VA_ARGS__) > 0) { \
             os << " with message: " __VA_ARGS__; \
-            std::cout << "INSIDE IF STATEMENT\n"; \
         } \
-        std::size_t wsize = csb.written_size(); \
+        std::size_t wsize{ csb.written_size() }; \
         buffer[wsize < length ? wsize : length - 1] = '\0'; \
         throw exception_type{buffer}; \
     }
