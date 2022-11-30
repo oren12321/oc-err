@@ -2,12 +2,12 @@
 #define MEMOC_ERRORS_H
 
 #include <cstdarg>
-#include <cstddef>
+#include <cstdint>
 #include <cstdio>
 
 namespace memoc {
     namespace details {
-        template <typename T, std::size_t Buffer_size = 256>
+        template <typename T, std::int64_t Buffer_size = 256>
         void format_and_throw(const char* condition, const char* exception_type, int line, const char* function, const char* file, const char* format = nullptr, ...)
         {
             char buffer[Buffer_size];
@@ -49,12 +49,12 @@ namespace memoc {
     namespace details {
         template <typename T>
         struct Custom_streambuf : public std::basic_streambuf<T, std::char_traits<T>> {
-            Custom_streambuf(T* buffer, std::size_t length)
+            Custom_streambuf(T* buffer, std::int64_t length)
             {
                 this->setp(buffer, buffer + length);
             }
 
-            std::size_t written_size() const
+            std::int64_t written_size() const
             {
                 return this->pptr() - this->pbase();
             }
@@ -82,7 +82,7 @@ namespace memoc {
 
 #define MEMOCPP_THROW_IF_FALSE(condition,exception_type,...) \
     {if (!(condition)) { \
-        constexpr std::size_t length{256}; \
+        constexpr std::int64_t length{256}; \
         char buffer[length]; \
         memoc::details::Custom_streambuf<char> csb{ buffer, length }; \
         std::ostream os{&csb}; \
@@ -90,7 +90,7 @@ namespace memoc {
         if (_VA_NARGS(__VA_ARGS__) > 0) { \
             os << " with message: " __VA_ARGS__; \
         } \
-        std::size_t wsize{ csb.written_size() }; \
+        std::int64_t wsize{ csb.written_size() }; \
         buffer[wsize < length ? wsize : length - 1] = '\0'; \
         throw exception_type{buffer}; \
     }}
