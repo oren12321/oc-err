@@ -76,7 +76,7 @@ TEST(Expected_test, can_have_either_value_or_error_of_any_types)
         auto result = divide(2, 1);
         EXPECT_TRUE(result);
         EXPECT_EQ(2, result.value());
-
+        EXPECT_THROW(result.error(), std::runtime_error);
         EXPECT_EQ(2, result.value_or(-1));
     }
 
@@ -84,7 +84,7 @@ TEST(Expected_test, can_have_either_value_or_error_of_any_types)
         auto result = divide(2, 0);
         EXPECT_FALSE(result);
         EXPECT_EQ(Errors::division_by_zero, result.error());
-
+        EXPECT_THROW(result.value(), std::runtime_error);
         EXPECT_EQ(-1, result.value_or(-1));
     }
 }
@@ -136,12 +136,14 @@ TEST(Expected_test, can_be_moved)
 
         EXPECT_TRUE(moved_result);
         EXPECT_EQ(1, moved_result.value());
+        EXPECT_THROW(moved_result.error(), std::runtime_error);
 
         Expected<int, double> other_result = 2;
         moved_result = std::move(other_result);
 
         EXPECT_TRUE(moved_result);
         EXPECT_EQ(2, moved_result.value());
+        EXPECT_THROW(moved_result.error(), std::runtime_error);
     }
 
     {
@@ -150,12 +152,14 @@ TEST(Expected_test, can_be_moved)
 
         EXPECT_FALSE(moved_result);
         EXPECT_EQ(1.1, moved_result.error());
+        EXPECT_THROW(moved_result.value(), std::runtime_error);
 
         Expected<int, double> other_result = 2.2;
         moved_result = other_result;
 
         EXPECT_FALSE(moved_result);
         EXPECT_EQ(2.2, moved_result.error());
+        EXPECT_THROW(moved_result.value(), std::runtime_error);
     }
 }
 
@@ -174,14 +178,13 @@ TEST(Optional_test, can_have_either_value_or_not)
         auto result = whole_divide(4, 2);
         EXPECT_TRUE(result);
         EXPECT_EQ(2, result.value());
-
         EXPECT_EQ(2, result.value_or(-1));
     }
 
     {
         auto result = whole_divide(3, 2);
         EXPECT_FALSE(result);
-
+        EXPECT_THROW(result.value(), std::runtime_error);
         EXPECT_EQ(-1, result.value_or(-1));
     }
 }

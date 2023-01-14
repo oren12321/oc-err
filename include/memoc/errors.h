@@ -173,11 +173,13 @@ namespace memoc {
                 return has_value_;
             }
 
-            [[nodiscard]] const T& value() const noexcept {
+            [[nodiscard]] const T& value() const {
+                MEMOC_THROW_IF_FALSE(has_value_, std::runtime_error, "invalid value access");
                 return value_;
             }
 
-            [[nodiscard]] const E& error() const noexcept {
+            [[nodiscard]] const E& error() const {
+                MEMOC_THROW_IF_FALSE(!has_value_, std::runtime_error, "invalid error access");
                 return error_;
             }
 
@@ -231,7 +233,8 @@ namespace memoc {
                 return has_value_;
             }
 
-            [[nodiscard]] const T& value() const noexcept {
+            [[nodiscard]] const T& value() const {
+                MEMOC_THROW_IF_FALSE(has_value_, std::runtime_error, "invalid value access");
                 return value_;
             }
 
