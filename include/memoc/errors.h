@@ -118,10 +118,55 @@ namespace memoc {
             {
             }
 
-            Expected(const Expected&) = default;
-            Expected& operator=(const Expected&) = default;
-            Expected(Expected&&) = default;
-            Expected& operator=(Expected&&) = default;
+            Expected(const Expected& other) noexcept
+                : has_value_(other.has_value_)
+            {
+                if (other) {
+                    value_ = other.value_;
+                }
+                else {
+                    error_ = other.error_;
+                }
+            }
+            Expected& operator=(const Expected& other) noexcept
+            {
+                if (&other == this) {
+                    return *this;
+                }
+
+                Expected tmp(other);
+                *this = std::move(tmp);
+
+                return *this;
+            }
+
+            Expected(Expected&& other) noexcept
+                : has_value_(other.has_value_)
+            {
+                if (other) {
+                    value_ = std::move(other.value_);
+                }
+                else {
+                    error_ = std::move(other.error_);
+                }
+            }
+            Expected& operator=(Expected&& other) noexcept
+            {
+                if (&other == this) {
+                    return *this;
+                }
+
+                has_value_ = other.has_value_;
+                if (other) {
+                    value_ = std::move(other.value_);
+                }
+                else {
+                    error_ = std::move(other.error_);
+                }
+
+                return *this;
+            }
+
             virtual ~Expected() = default;
 
             explicit [[nodiscard]] operator bool() const noexcept {
@@ -168,6 +213,11 @@ namespace memoc {
 
             Optional(const Nullopt& value) noexcept
                 : has_value_(false)
+            {
+            }
+
+            Optional() noexcept
+                : Optional(Nullopt{})
             {
             }
 

@@ -89,13 +89,83 @@ TEST(Expected_test, can_have_either_value_or_error_of_any_types)
     }
 }
 
+TEST(Expected_test, can_be_copied)
+{
+    using namespace memoc;
+
+    {
+        Expected<int, double> result = 1;
+        Expected<int, double> copied_result(result);
+
+        EXPECT_TRUE(result);
+        EXPECT_EQ(1, result.value());
+
+        EXPECT_TRUE(copied_result);
+        EXPECT_EQ(1, copied_result.value());
+        
+        copied_result = result;
+
+        EXPECT_TRUE(copied_result);
+        EXPECT_EQ(1, copied_result.value());
+    }
+
+    {
+        Expected<int, double> result = 1.1;
+        Expected<int, double> copied_result(result);
+
+        EXPECT_FALSE(result);
+        EXPECT_EQ(1.1, result.error());
+
+        EXPECT_FALSE(copied_result);
+        EXPECT_EQ(1.1, copied_result.error());
+
+        copied_result = result;
+
+        EXPECT_FALSE(copied_result);
+        EXPECT_EQ(1.1, copied_result.error());
+    }
+}
+
+TEST(Expected_test, can_be_moved)
+{
+    using namespace memoc;
+
+    {
+        Expected<int, double> result = 1;
+        Expected<int, double> moved_result(std::move(result));
+
+        EXPECT_TRUE(moved_result);
+        EXPECT_EQ(1, moved_result.value());
+
+        Expected<int, double> other_result = 2;
+        moved_result = std::move(other_result);
+
+        EXPECT_TRUE(moved_result);
+        EXPECT_EQ(2, moved_result.value());
+    }
+
+    {
+        Expected<int, double> result = 1.1;
+        Expected<int, double> moved_result(result);
+
+        EXPECT_FALSE(moved_result);
+        EXPECT_EQ(1.1, moved_result.error());
+
+        Expected<int, double> other_result = 2.2;
+        moved_result = other_result;
+
+        EXPECT_FALSE(moved_result);
+        EXPECT_EQ(2.2, moved_result.error());
+    }
+}
+
 TEST(Optional_test, can_have_either_value_or_not)
 {
     using namespace memoc;
 
     auto whole_divide = [](int a, int b) -> Optional<int> {
         if (a % b != 0) {
-            return Nullopt{};
+            return {};
         }
         return a / b;
     };
