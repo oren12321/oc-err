@@ -169,11 +169,11 @@ namespace memoc {
 
             virtual ~Expected() = default;
 
-            explicit [[nodiscard]] operator bool() const noexcept {
+            [[nodiscard]] explicit operator bool() const noexcept {
                 return has_value_;
             }
 
-            [[nodicsard]] const T& value() const noexcept {
+            [[nodiscard]] const T& value() const noexcept {
                 return value_;
             }
 
@@ -227,11 +227,11 @@ namespace memoc {
             Optional& operator=(Optional&&) = default;
             virtual ~Optional() = default;
 
-            explicit [[nodiscard]] operator bool() const noexcept {
+            [[nodiscard]] explicit operator bool() const noexcept {
                 return has_value_;
             }
 
-            [[nodicsard]] const T& value() const noexcept {
+            [[nodiscard]] const T& value() const noexcept {
                 return value_;
             }
 
@@ -243,7 +243,7 @@ namespace memoc {
             }
 
         private:
-            T value_{};
+            T value_;
             bool has_value_{ false };
         };
     }
