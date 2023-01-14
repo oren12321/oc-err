@@ -169,25 +169,66 @@ namespace memoc {
 
             virtual ~Expected() = default;
 
-            [[nodiscard]] explicit operator bool() const noexcept {
+            [[nodiscard]] explicit operator bool() const noexcept
+            {
                 return has_value_;
             }
 
-            [[nodiscard]] const T& value() const {
+            [[nodiscard]] const T& value() const
+            {
                 MEMOC_THROW_IF_FALSE(has_value_, std::runtime_error, "invalid value access");
                 return value_;
             }
 
-            [[nodiscard]] const E& error() const {
+            [[nodiscard]] const E& error() const
+            {
                 MEMOC_THROW_IF_FALSE(!has_value_, std::runtime_error, "invalid error access");
                 return error_;
             }
 
-            [[nodiscard]] T value_or(const T& other) const noexcept {
+            [[nodiscard]] T value_or(const T& other) const noexcept
+            {
                 return has_value_ ? value_ : other;
             }
-            [[nodiscard]] T value_or(T&& other) const noexcept {
+            [[nodiscard]] T value_or(T&& other) const noexcept
+            {
                 return has_value_ ? value_ : std::move(other);
+            }
+
+            template <typename Unary_op>
+            [[nodiscard]] Expected<T, E> and_then(Unary_op op) const
+            {
+                if (has_value_) {
+                    return Expected<T, E>(op(value_));
+                }
+                return *this;
+            }
+
+            template <typename Unary_op>
+            [[nodiscard]] Expected<T, E> or_else(Unary_op op) const
+            {
+                if (has_value_) {
+                    return *this;
+                }
+                return Expected<T, E>(op(error_));
+            }
+
+            template <typename Unary_op>
+            [[nodiscard]] auto and_transform(Unary_op op) const
+            {
+                if (has_value_) {
+                    return Expected<decltype(op(value_)), E>(op(value_));
+                }
+                return Expected<decltype(op(value_)), E>(error_);
+            }
+
+            template <typename Unary_op>
+            [[nodiscard]] auto or_transform(Unary_op op) const
+            {
+                if (has_value_) {
+                    return Expected<T, decltype(op(error_))>(value_);
+                }
+                return Expected<T, decltype(op(error_))>(op(error_));
             }
 
         private:

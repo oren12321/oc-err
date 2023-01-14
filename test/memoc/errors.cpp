@@ -163,6 +163,66 @@ TEST(Expected_test, can_be_moved)
     }
 }
 
+TEST(Expected_test, have_monadic_oprations)
+{
+    using namespace memoc;
+
+    enum class Errors {
+        division_by_zero,
+        division_failed
+    };
+
+    enum class Other_errors {
+        division_by_zero,
+        division_failed
+    };
+
+    auto divide = [](double a, double b) -> Expected<double, Errors> {
+        if (b == 0) {
+            return Errors::division_by_zero;
+        }
+        return a / b;
+    };
+
+    auto increment = [](double a) { return a + 1; };
+    auto to_int = [](double a) { return static_cast<int>(a); };
+
+    auto same = [](Errors) { return Errors::division_failed; };
+    auto seem = [](Errors a) { return static_cast<Other_errors>(a); };
+
+    {
+        auto result = divide(2, 4)
+            .and_then(increment);
+
+        EXPECT_TRUE(result);
+        EXPECT_EQ(1.5, result.value());
+    }
+
+    {
+        auto result = divide(2, 4)
+            .and_transform(to_int);
+
+        EXPECT_TRUE(result);
+        EXPECT_EQ(0, result.value());
+    }
+
+    {
+        auto result = divide(2, 0)
+            .or_else(same);
+
+        EXPECT_FALSE(result);
+        EXPECT_EQ(Errors::division_failed, result.error());
+    }
+
+    {
+        auto result = divide(2, 0)
+            .or_transform(seem);
+
+        EXPECT_FALSE(result);
+        EXPECT_EQ(Other_errors::division_by_zero, result.error());
+    }
+}
+
 TEST(Optional_test, can_have_either_value_or_not)
 {
     using namespace memoc;
