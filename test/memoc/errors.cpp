@@ -57,3 +57,61 @@ TEST(Errors_cpp_test, core_expect_throws_an_exception_with_specific_description)
     }
 }
 
+TEST(Expected_test, can_have_either_value_or_error_of_any_types)
+{
+    using namespace memoc;
+
+    enum class Errors {
+        division_by_zero
+    };
+
+    auto divide = [](int a, int b) -> Expected<int, Errors> {
+        if (b == 0) {
+            return Errors::division_by_zero;
+        }
+        return a / b;
+    };
+
+    {
+        auto result = divide(2, 1);
+        EXPECT_TRUE(result);
+        EXPECT_EQ(2, result.value());
+
+        EXPECT_EQ(2, result.value_or(-1));
+    }
+
+    {
+        auto result = divide(2, 0);
+        EXPECT_FALSE(result);
+        EXPECT_EQ(Errors::division_by_zero, result.error());
+
+        EXPECT_EQ(-1, result.value_or(-1));
+    }
+}
+
+TEST(Optional_test, can_have_either_value_or_not)
+{
+    using namespace memoc;
+
+    auto whole_divide = [](int a, int b) -> Optional<int> {
+        if (a % b != 0) {
+            return Nullopt{};
+        }
+        return a / b;
+    };
+
+    {
+        auto result = whole_divide(4, 2);
+        EXPECT_TRUE(result);
+        EXPECT_EQ(2, result.value());
+
+        EXPECT_EQ(2, result.value_or(-1));
+    }
+
+    {
+        auto result = whole_divide(3, 2);
+        EXPECT_FALSE(result);
+
+        EXPECT_EQ(-1, result.value_or(-1));
+    }
+}

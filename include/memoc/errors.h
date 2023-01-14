@@ -95,5 +95,114 @@ namespace memoc {
         throw exception_type{buffer}; \
     }}
 
+namespace memoc {
+    namespace details {
+        template <typename T, typename E>
+        class Expected {
+        public:
+            Expected(const T& value) noexcept
+                : value_(value), has_value_(true)
+            {
+            }
+            Expected(T&& value) noexcept
+                : value_(std::move(value)), has_value_(true)
+            {
+            }
+
+            Expected(const E& error) noexcept
+                : error_(error), has_value_(false)
+            {
+            }
+            Expected(E&& error) noexcept
+                : error_(std::move(error)), has_value_(false)
+            {
+            }
+
+            Expected(const Expected&) = default;
+            Expected& operator=(const Expected&) = default;
+            Expected(Expected&&) = default;
+            Expected& operator=(Expected&&) = default;
+            virtual ~Expected() = default;
+
+            explicit [[nodiscard]] operator bool() const noexcept {
+                return has_value_;
+            }
+
+            [[nodicsard]] const T& value() const noexcept {
+                return value_;
+            }
+
+            [[nodiscard]] const E& error() const noexcept {
+                return error_;
+            }
+
+            [[nodiscard]] T value_or(const T& other) const noexcept {
+                return has_value_ ? value_ : other;
+            }
+            [[nodiscard]] T value_or(T&& other) const noexcept {
+                return has_value_ ? value_ : std::move(other);
+            }
+
+        private:
+            union {
+                T value_;
+                E error_;
+            };
+            bool has_value_{ false };
+        };
+
+        struct Nullopt {
+        };
+
+        template <typename T>
+        class Optional {
+        public:
+            Optional(const T& value) noexcept
+                : value_(value), has_value_(true)
+            {
+            }
+            Optional(T&& value) noexcept
+                : value_(std::move(value)), has_value_(true)
+            {
+            }
+
+            Optional(const Nullopt& value) noexcept
+                : has_value_(false)
+            {
+            }
+
+            Optional(const Optional&) = default;
+            Optional& operator=(const Optional&) = default;
+            Optional(Optional&&) = default;
+            Optional& operator=(Optional&&) = default;
+            virtual ~Optional() = default;
+
+            explicit [[nodiscard]] operator bool() const noexcept {
+                return has_value_;
+            }
+
+            [[nodicsard]] const T& value() const noexcept {
+                return value_;
+            }
+
+            [[nodiscard]] T value_or(const T& other) const noexcept {
+                return has_value_ ? value_ : other;
+            }
+            [[nodiscard]] T value_or(T&& other) const noexcept {
+                return has_value_ ? value_ : std::move(other);
+            }
+
+        private:
+            T value_{};
+            bool has_value_{ false };
+        };
+    }
+
+    using details::Expected;
+
+    using details::Nullopt;
+    using details::Optional;
+}
+
 #endif // MEMOC_ERRORS_H
 
