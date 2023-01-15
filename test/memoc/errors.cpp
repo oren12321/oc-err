@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <regex>
+#include <sstream>
 
 #include <memoc/errors.h>
 
@@ -192,34 +193,55 @@ TEST(Expected_test, have_monadic_oprations)
 
     {
         auto result = divide(2, 4)
-            .and_then(increment);
+            .and_then(increment)
+            .and_then(to_int);
+
+        EXPECT_TRUE(result);
+        EXPECT_EQ(1, result.value());
+    }
+
+    {
+        auto result = divide(2, 0)
+            .or_else(same)
+            .or_else(seem);
+
+        EXPECT_FALSE(result);
+        EXPECT_EQ(Other_errors::division_failed, result.error());
+    }
+
+    std::stringstream ss{};
+    auto report_value = [&ss](double a) { ss << "result = " << a; };
+    auto report_failure = [&ss](Errors) { ss << "operation failed: "; };
+    auto report_reason = [&ss](Errors) { ss << "division by zero"; };
+
+    {
+        ss.str("");
+
+        auto result = divide(2, 4)
+            .and_then(increment)
+            .and_then(report_value)
+            .or_else(report_failure)
+            .or_else(report_reason);
 
         EXPECT_TRUE(result);
         EXPECT_EQ(1.5, result.value());
+
+        EXPECT_EQ("result = 1.5", ss.str());
     }
 
     {
-        auto result = divide(2, 4)
-            .and_transform(to_int);
+        ss.str("");
 
-        EXPECT_TRUE(result);
-        EXPECT_EQ(0, result.value());
-    }
-
-    {
         auto result = divide(2, 0)
-            .or_else(same);
+            .and_then(increment)
+            .and_then(report_value)
+            .or_else(report_failure)
+            .or_else(report_reason);
 
         EXPECT_FALSE(result);
-        EXPECT_EQ(Errors::division_failed, result.error());
-    }
+        EXPECT_EQ(Errors::division_by_zero, result.error());
 
-    {
-        auto result = divide(2, 0)
-            .or_transform(seem);
-
-        EXPECT_FALSE(result);
-        EXPECT_EQ(Other_errors::division_by_zero, result.error());
+        EXPECT_EQ("operation failed: division by zero", ss.str());
     }
 }
 

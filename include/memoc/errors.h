@@ -100,7 +100,7 @@ namespace memoc {
         template <typename T, typename E>
         class Expected {
         public:
-            Expected(const T& value) noexcept
+            Expected(const T& value)
                 : value_(value), has_value_(true)
             {
             }
@@ -109,7 +109,7 @@ namespace memoc {
             {
             }
 
-            Expected(const E& error) noexcept
+            Expected(const E& error)
                 : error_(error), has_value_(false)
             {
             }
@@ -118,7 +118,7 @@ namespace memoc {
             {
             }
 
-            Expected(const Expected& other) noexcept
+            Expected(const Expected& other)
                 : has_value_(other.has_value_)
             {
                 if (other) {
@@ -128,7 +128,7 @@ namespace memoc {
                     error_ = other.error_;
                 }
             }
-            Expected& operator=(const Expected& other) noexcept
+            Expected& operator=(const Expected& other)
             {
                 if (&other == this) {
                     return *this;
@@ -186,35 +186,17 @@ namespace memoc {
                 return error_;
             }
 
-            [[nodiscard]] T value_or(const T& other) const noexcept
+            [[nodiscard]] T value_or(const T& other) const
             {
                 return has_value_ ? value_ : other;
             }
-            [[nodiscard]] T value_or(T&& other) const noexcept
+            [[nodiscard]] T value_or(T&& other) const
             {
                 return has_value_ ? value_ : std::move(other);
             }
 
             template <typename Unary_op>
-            [[nodiscard]] Expected<T, E> and_then(Unary_op op) const
-            {
-                if (has_value_) {
-                    return Expected<T, E>(op(value_));
-                }
-                return *this;
-            }
-
-            template <typename Unary_op>
-            [[nodiscard]] Expected<T, E> or_else(Unary_op op) const
-            {
-                if (has_value_) {
-                    return *this;
-                }
-                return Expected<T, E>(op(error_));
-            }
-
-            template <typename Unary_op>
-            [[nodiscard]] auto and_transform(Unary_op op) const
+            [[nodiscard]] auto and_then(Unary_op op) const
             {
                 if (has_value_) {
                     return Expected<decltype(op(value_)), E>(op(value_));
@@ -223,7 +205,17 @@ namespace memoc {
             }
 
             template <typename Unary_op>
-            [[nodiscard]] auto or_transform(Unary_op op) const
+            [[nodiscard]] auto and_then(Unary_op op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.value())) >
+            {
+                if (has_value_) {
+                    op(value_);
+                    return Expected<T, E>(value_);
+                }
+                return *this;
+            }
+
+            template <typename Unary_op>
+            [[nodiscard]] auto or_else(Unary_op op) const
             {
                 if (has_value_) {
                     return Expected<T, decltype(op(error_))>(value_);
@@ -231,13 +223,26 @@ namespace memoc {
                 return Expected<T, decltype(op(error_))>(op(error_));
             }
 
+            template <typename Unary_op>
+            [[nodiscard]] auto or_else(Unary_op op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.error())) >
+            {
+                if (has_value_) {
+                    return *this;
+                }
+                op(error_);
+                return Expected<T, E>(error_);
+            }
+
         private:
+            Expected() = default;
+
             union {
                 T value_;
                 E error_;
             };
             bool has_value_{ false };
         };
+
 
         struct Nullopt {
         };
