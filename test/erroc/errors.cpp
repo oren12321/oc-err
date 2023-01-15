@@ -4,22 +4,22 @@
 #include <regex>
 #include <sstream>
 
-#include <memoc/errors.h>
+#include <erroc/errors.h>
 
 TEST(Errors_test, core_expect_not_throwing_exception_when_condition_is_true)
 {
-    EXPECT_NO_THROW(MEMOC_THROW_IF_FALSE(0 == 0, std::runtime_error));
+    EXPECT_NO_THROW(ERROC_THROW_IF_FALSE(0 == 0, std::runtime_error));
 }
 
 TEST(Errors_test, core_except_throws_specified_exception_when_condition_fails)
 {
-    EXPECT_THROW(MEMOC_THROW_IF_FALSE(0 == 1, std::runtime_error), std::runtime_error);
+    EXPECT_THROW(ERROC_THROW_IF_FALSE(0 == 1, std::runtime_error), std::runtime_error);
 }
 
 TEST(Errors_test, core_expect_throws_an_exception_with_specific_description)
 {
     try {
-        MEMOC_THROW_IF_FALSE(0 == 1, std::runtime_error, "some message with optional %d value", 0);
+        ERROC_THROW_IF_FALSE(0 == 1, std::runtime_error, "some message with optional %d value", 0);
         FAIL();
     }
     catch (const std::runtime_error& ex) {
@@ -31,25 +31,25 @@ TEST(Errors_test, core_expect_throws_an_exception_with_specific_description)
 TEST(Errors_cpp_test, core_expect_not_throwing_exception_when_condition_is_true)
 {
 #ifdef __unix__
-    EXPECT_NO_THROW((MEMOCPP_THROW_IF_FALSE(0 == 0, std::runtime_error)));
+    EXPECT_NO_THROW((ERROCPP_THROW_IF_FALSE(0 == 0, std::runtime_error)));
 #elif defined(_WIN32) || defined(_WIN64)
-    EXPECT_NO_THROW(MEMOCPP_THROW_IF_FALSE(0 == 0, std::runtime_error));
+    EXPECT_NO_THROW(ERROCPP_THROW_IF_FALSE(0 == 0, std::runtime_error));
 #endif
 }
 
 TEST(Errors_cpp_test, core_except_throws_specified_exception_when_condition_fails)
 {
 #ifdef __unix__
-    EXPECT_THROW((MEMOCPP_THROW_IF_FALSE(0 == 1, std::runtime_error)), std::runtime_error);
+    EXPECT_THROW((ERROCPP_THROW_IF_FALSE(0 == 1, std::runtime_error)), std::runtime_error);
 #elif defined(_WIN32) || defined(_WIN64)
-    EXPECT_THROW(MEMOCPP_THROW_IF_FALSE(0 == 1, std::runtime_error), std::runtime_error);
+    EXPECT_THROW(ERROCPP_THROW_IF_FALSE(0 == 1, std::runtime_error), std::runtime_error);
 #endif
 }
 
 TEST(Errors_cpp_test, core_expect_throws_an_exception_with_specific_description)
 {
     try {
-        MEMOCPP_THROW_IF_FALSE(0 == 1, std::runtime_error, << "some message with optional " << 0 << " value");
+        ERROCPP_THROW_IF_FALSE(0 == 1, std::runtime_error, << "some message with optional " << 0 << " value");
         FAIL();
     }
     catch (const std::runtime_error& ex) {
@@ -60,7 +60,7 @@ TEST(Errors_cpp_test, core_expect_throws_an_exception_with_specific_description)
 
 TEST(Expected_test, can_have_either_value_or_error_of_any_types)
 {
-    using namespace memoc;
+    using namespace erroc;
 
     enum class Errors {
         division_by_zero
@@ -92,7 +92,7 @@ TEST(Expected_test, can_have_either_value_or_error_of_any_types)
 
 TEST(Expected_test, can_be_copied)
 {
-    using namespace memoc;
+    using namespace erroc;
 
     {
         Expected<int, double> result = 1;
@@ -129,7 +129,7 @@ TEST(Expected_test, can_be_copied)
 
 TEST(Expected_test, can_be_moved)
 {
-    using namespace memoc;
+    using namespace erroc;
 
     {
         Expected<int, double> result = 1;
@@ -166,7 +166,7 @@ TEST(Expected_test, can_be_moved)
 
 TEST(Expected_test, have_monadic_oprations)
 {
-    using namespace memoc;
+    using namespace erroc;
 
     enum class Errors {
         division_by_zero,
@@ -247,7 +247,7 @@ TEST(Expected_test, have_monadic_oprations)
 
 TEST(Optional_test, can_have_either_value_or_not)
 {
-    using namespace memoc;
+    using namespace erroc;
 
     auto whole_divide = [](int a, int b) -> Optional<int> {
         if (a % b != 0) {

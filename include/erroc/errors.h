@@ -1,11 +1,11 @@
-#ifndef MEMOC_ERRORS_H
-#define MEMOC_ERRORS_H
+#ifndef ERROC_ERRORS_H
+#define ERROC_ERRORS_H
 
 #include <cstdarg>
 #include <cstdint>
 #include <cstdio>
 
-namespace memoc {
+namespace erroc {
     namespace details {
         template <typename T, std::int64_t Buffer_size = 256>
         void format_and_throw(const char* condition, const char* exception_type, int line, const char* function, const char* file, const char* format = nullptr, ...)
@@ -31,21 +31,21 @@ namespace memoc {
 }
 
 #ifdef __unix__
-#define MEMOC_THROW_IF_FALSE(condition,exception_type,...) \
+#define ERROC_THROW_IF_FALSE(condition,exception_type,...) \
     if(!(condition)) { \
-        memoc::details::format_and_throw<exception_type>(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__ __VA_OPT__(, __VA_ARGS__)); \
+        erroc::details::format_and_throw<exception_type>(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__ __VA_OPT__(, __VA_ARGS__)); \
     }
 #elif defined(_WIN32) || defined(_WIN64)
-#define MEMOC_THROW_IF_FALSE(condition,exception_type,...) \
+#define ERROC_THROW_IF_FALSE(condition,exception_type,...) \
     if(!(condition)) { \
-        memoc::details::format_and_throw<exception_type>(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__, __VA_ARGS__); \
+        erroc::details::format_and_throw<exception_type>(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__, __VA_ARGS__); \
     }
 #endif
 
 #include <streambuf>
 #include <ostream>
 
-namespace memoc {
+namespace erroc {
     namespace details {
         template <typename T>
         struct Custom_streambuf : public std::basic_streambuf<T, std::char_traits<T>> {
@@ -80,13 +80,13 @@ namespace memoc {
 #define _VA_NARGS(...) _NARGS_1(_AUGMENTER(__VA_ARGS__))
 #endif
 
-#define MEMOCPP_THROW_IF_FALSE(condition,exception_type,...) \
+#define ERROCPP_THROW_IF_FALSE(condition,exception_type,...) \
     {if (!(condition)) { \
         constexpr std::int64_t length{256}; \
         char buffer[length]; \
-        memoc::details::Custom_streambuf<char> csb{ buffer, length }; \
+        erroc::details::Custom_streambuf<char> csb{ buffer, length }; \
         std::ostream os{&csb}; \
-        memoc::details::format_error_prefix(os, #condition, #exception_type, __LINE__, __FUNCTION__, __FILE__); \
+        erroc::details::format_error_prefix(os, #condition, #exception_type, __LINE__, __FUNCTION__, __FILE__); \
         if (_VA_NARGS(__VA_ARGS__) > 0) { \
             os << " with message: " __VA_ARGS__; \
         } \
@@ -95,7 +95,7 @@ namespace memoc {
         throw exception_type{buffer}; \
     }}
 
-namespace memoc {
+namespace erroc {
     namespace details {
         template <typename T, typename E>
         class Expected {
@@ -176,13 +176,13 @@ namespace memoc {
 
             [[nodiscard]] const T& value() const
             {
-                MEMOC_THROW_IF_FALSE(has_value_, std::runtime_error, "invalid value access");
+                ERROC_THROW_IF_FALSE(has_value_, std::runtime_error, "invalid value access");
                 return value_;
             }
 
             [[nodiscard]] const E& error() const
             {
-                MEMOC_THROW_IF_FALSE(!has_value_, std::runtime_error, "invalid error access");
+                ERROC_THROW_IF_FALSE(!has_value_, std::runtime_error, "invalid error access");
                 return error_;
             }
 
@@ -280,7 +280,7 @@ namespace memoc {
             }
 
             [[nodiscard]] const T& value() const {
-                MEMOC_THROW_IF_FALSE(has_value_, std::runtime_error, "invalid value access");
+                ERROC_THROW_IF_FALSE(has_value_, std::runtime_error, "invalid value access");
                 return value_;
             }
 
@@ -303,5 +303,5 @@ namespace memoc {
     using details::Optional;
 }
 
-#endif // MEMOC_ERRORS_H
+#endif // ERROC_ERRORS_H
 
