@@ -281,3 +281,56 @@ TEST(Optional_test, can_have_either_value_or_not)
         EXPECT_EQ(-1, result.expected_or(-1));
     }
 }
+
+TEST(Optional_test, can_be_compared)
+{
+    using namespace erroc;
+
+    Optional<int, double> opt1 = 110;
+    Optional<char, float> opt2 = 'n';
+
+    Optional<char, double> nopt1 = 1.;
+    Optional<int, float> nopt2 = 1.f;
+
+    {
+        EXPECT_TRUE(opt1 == opt2);
+        EXPECT_TRUE(nopt1 == nopt2);
+        EXPECT_FALSE(opt1 == nopt1);
+        EXPECT_FALSE(opt2 == nopt2);
+    }
+
+    {
+        EXPECT_FALSE(opt1 != opt2);
+        EXPECT_FALSE(nopt1 != nopt2);
+        EXPECT_TRUE(opt1 != nopt1);
+        EXPECT_TRUE(opt2 != nopt2);
+    }
+
+    {
+        EXPECT_FALSE(opt1 < opt2);
+        EXPECT_FALSE(nopt1 < nopt2);
+        EXPECT_FALSE(opt1 < nopt1);
+        EXPECT_FALSE(opt2 < nopt2);
+    }
+
+    {
+        EXPECT_TRUE(opt1 <= opt2);
+        EXPECT_TRUE(nopt1 <= nopt2);
+        EXPECT_FALSE(opt1 <= nopt1);
+        EXPECT_FALSE(opt2 <= nopt2);
+    }
+
+    {
+        EXPECT_FALSE(opt1 > opt2);
+        EXPECT_FALSE(nopt1 > nopt2);
+        EXPECT_FALSE(opt1 > nopt1);
+        EXPECT_FALSE(opt2 > nopt2);
+    }
+
+    {
+        EXPECT_TRUE(opt1 >= opt2);
+        EXPECT_TRUE(nopt1 >= nopt2);
+        EXPECT_FALSE(opt1 >= nopt1);
+        EXPECT_FALSE(opt2 >= nopt2);
+    }
+}

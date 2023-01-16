@@ -250,6 +250,66 @@ namespace erroc {
             };
             bool has_expected_{ false };
         };
+
+        template <typename T1, typename T2, typename U1, typename U2>
+        [[nodiscard]] inline bool operator==(const Optional<T1, T2>& lhs, const Optional<U1, U2>& rhs)
+        {
+            if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
+                return false;
+            }
+
+            return lhs ? (lhs.expected() == rhs.expected()) : (lhs.unexpected() == rhs.unexpected());
+        }
+
+        template <typename T1, typename T2, typename U1, typename U2>
+        [[nodiscard]] inline bool operator!=(const Optional<T1, T2>& lhs, const Optional<U1, U2>& rhs)
+        {
+            if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
+                return true;
+            }
+
+            return lhs ? (lhs.expected() != rhs.expected()) : (lhs.unexpected() != rhs.unexpected());
+        }
+
+        template <typename T1, typename T2, typename U1, typename U2>
+        [[nodiscard]] inline bool operator<(const Optional<T1, T2>& lhs, const Optional<U1, U2>& rhs)
+        {
+            if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
+                return false;
+            }
+
+            return lhs ? (lhs.expected() < rhs.expected()) : (lhs.unexpected() < rhs.unexpected());
+        }
+
+        template <typename T1, typename T2, typename U1, typename U2>
+        [[nodiscard]] inline bool operator<=(const Optional<T1, T2>& lhs, const Optional<U1, U2>& rhs)
+        {
+            if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
+                return false;
+            }
+
+            return lhs ? (lhs.expected() <= rhs.expected()) : (lhs.unexpected() <= rhs.unexpected());
+        }
+
+        template <typename T1, typename T2, typename U1, typename U2>
+        [[nodiscard]] inline bool operator>(const Optional<T1, T2>& lhs, const Optional<U1, U2>& rhs)
+        {
+            if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
+                return false;
+            }
+
+            return lhs ? (lhs.expected() > rhs.expected()) : (lhs.unexpected() > rhs.unexpected());
+        }
+
+        template <typename T1, typename T2, typename U1, typename U2>
+        [[nodiscard]] inline bool operator>=(const Optional<T1, T2>& lhs, const Optional<U1, U2>& rhs)
+        {
+            if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
+                return false;
+            }
+
+            return lhs ? (lhs.expected() >= rhs.expected()) : (lhs.unexpected() >= rhs.unexpected());
+        }
     }
 
     using details::Null_option;
