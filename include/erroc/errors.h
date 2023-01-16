@@ -97,129 +97,129 @@ namespace erroc {
 
 namespace erroc {
     namespace details {
-        struct Null_error {
+        struct Null_option {
         };
 
-        template <typename T, typename E>
-        class Expected {
+        template <typename T1, typename T2 = Null_option>
+        class Optional {
         public:
-            Expected(const T& value)
-                : value_(value), has_value_(true)
+            Optional(const T1& expected)
+                : expected_(expected), has_expected_(true)
             {
             }
-            Expected(T&& value) noexcept
-                : value_(std::move(value)), has_value_(true)
-            {
-            }
-
-            Expected(const E& error)
-                : error_(error), has_value_(false)
-            {
-            }
-            Expected(E&& error) noexcept
-                : error_(std::move(error)), has_value_(false)
+            Optional(T1&& expected) noexcept
+                : expected_(std::move(expected)), has_expected_(true)
             {
             }
 
-            Expected() noexcept
-                : Expected(Null_error{})
+            Optional(const T2& unexpected)
+                : unexpected_(unexpected), has_expected_(false)
+            {
+            }
+            Optional(T2&& unexpected) noexcept
+                : unexpected_(std::move(unexpected)), has_expected_(false)
             {
             }
 
-            Expected(const Expected& other)
-                : has_value_(other.has_value_)
+            Optional() noexcept
+                : Optional(Null_option{})
+            {
+            }
+
+            Optional(const Optional& other)
+                : has_expected_(other.has_expected_)
             {
                 if (other) {
-                    value_ = other.value_;
+                    expected_ = other.expected_;
                 }
                 else {
-                    error_ = other.error_;
+                    unexpected_ = other.unexpected_;
                 }
             }
-            Expected& operator=(const Expected& other)
+            Optional& operator=(const Optional& other)
             {
                 if (&other == this) {
                     return *this;
                 }
 
-                Expected tmp(other);
+                Optional tmp(other);
                 *this = std::move(tmp);
 
                 return *this;
             }
 
-            Expected(Expected&& other) noexcept
-                : has_value_(other.has_value_)
+            Optional(Optional&& other) noexcept
+                : has_expected_(other.has_expected_)
             {
                 if (other) {
-                    value_ = std::move(other.value_);
+                    expected_ = std::move(other.expected_);
                 }
                 else {
-                    error_ = std::move(other.error_);
+                    unexpected_ = std::move(other.unexpected_);
                 }
             }
-            Expected& operator=(Expected&& other) noexcept
+            Optional& operator=(Optional&& other) noexcept
             {
                 if (&other == this) {
                     return *this;
                 }
 
-                has_value_ = other.has_value_;
+                has_expected_ = other.has_expected_;
                 if (other) {
-                    value_ = std::move(other.value_);
+                    expected_ = std::move(other.expected_);
                 }
                 else {
-                    error_ = std::move(other.error_);
+                    unexpected_ = std::move(other.unexpected_);
                 }
 
                 return *this;
             }
 
-            virtual ~Expected() = default;
+            virtual ~Optional() = default;
 
             [[nodiscard]] explicit operator bool() const noexcept
             {
-                return has_value_;
+                return has_expected_;
             }
 
-            [[nodiscard]] const T& value() const
+            [[nodiscard]] const T1& expected() const
             {
-                ERROC_EXPECT(has_value_, std::runtime_error, "expected value not present");
-                return value_;
+                ERROC_EXPECT(has_expected_, std::runtime_error, "expected value not present");
+                return expected_;
             }
 
-            [[nodiscard]] const E& error() const
+            [[nodiscard]] const T2& unexpected() const
             {
-                ERROC_EXPECT(!has_value_, std::runtime_error, "expected error not present");
-                return error_;
+                ERROC_EXPECT(!has_expected_, std::runtime_error, "unexpected value not present");
+                return unexpected_;
             }
 
             template <typename U>
-            [[nodiscard]] T value_or(const U& other) const
+            [[nodiscard]] T1 expected_or(const U& other) const
             {
-                return has_value_ ? value_ : other;
+                return has_expected_ ? expected_ : other;
             }
             template <typename U>
-            [[nodiscard]] T value_or(U&& other) const
+            [[nodiscard]] T1 expected_or(U&& other) const
             {
-                return has_value_ ? value_ : std::move(other);
+                return has_expected_ ? expected_ : std::move(other);
             }
 
             template <typename Unary_op>
             [[nodiscard]] auto and_then(Unary_op&& op) const
             {
-                if (has_value_) {
-                    return Expected<decltype(op(value_)), E>(op(value_));
+                if (has_expected_) {
+                    return Optional<decltype(op(expected_)), T2>(op(expected_));
                 }
-                return Expected<decltype(op(value_)), E>(error_);
+                return Optional<decltype(op(expected_)), T2>(unexpected_);
             }
 
             template <typename Unary_op>
-            [[nodiscard]] auto and_then(Unary_op&& op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.value())) >
+            [[nodiscard]] auto and_then(Unary_op&& op) const requires std::is_void_v<decltype(op(Optional<T1, T2>{}.expected())) >
             {
-                if (has_value_) {
-                    op(value_);
-                    return Expected<T, E>(value_);
+                if (has_expected_) {
+                    op(expected_);
+                    return Optional<T1, T2>(expected_);
                 }
                 return *this;
             }
@@ -227,37 +227,32 @@ namespace erroc {
             template <typename Unary_op>
             [[nodiscard]] auto or_else(Unary_op&& op) const
             {
-                if (has_value_) {
-                    return Expected<T, decltype(op(error_))>(value_);
+                if (has_expected_) {
+                    return Optional<T1, decltype(op(unexpected_))>(expected_);
                 }
-                return Expected<T, decltype(op(error_))>(op(error_));
+                return Optional<T1, decltype(op(unexpected_))>(op(unexpected_));
             }
 
             template <typename Unary_op>
-            [[nodiscard]] auto or_else(Unary_op&& op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.error())) >
+            [[nodiscard]] auto or_else(Unary_op&& op) const requires std::is_void_v<decltype(op(Optional<T1, T2>{}.unexpected())) >
             {
-                if (has_value_) {
+                if (has_expected_) {
                     return *this;
                 }
-                op(error_);
-                return Expected<T, E>(error_);
+                op(unexpected_);
+                return Optional<T1, T2>(unexpected_);
             }
 
         private:
             union {
-                T value_;
-                E error_;
+                T1 expected_;
+                T2 unexpected_;
             };
-            bool has_value_{ false };
+            bool has_expected_{ false };
         };
-
-        template <typename T>
-        using Optional = Expected<T, Null_error>;
     }
 
-    using details::Expected;
-
-    using details::Null_error;
+    using details::Null_option;
     using details::Optional;
 }
 

@@ -69,7 +69,7 @@ TEST_F(Errocpp_expect, throws_an_exception_with_specific_format)
     }
 }
 
-TEST(Expected_test, can_have_either_value_or_error_of_any_types)
+TEST(Optional_test, can_have_either_value_or_error_of_any_types)
 {
     using namespace erroc;
 
@@ -77,7 +77,7 @@ TEST(Expected_test, can_have_either_value_or_error_of_any_types)
         division_by_zero
     };
 
-    auto divide = [](int a, int b) -> Expected<int, Errors> {
+    auto divide = [](int a, int b) -> Optional<int, Errors> {
         if (b == 0) {
             return Errors::division_by_zero;
         }
@@ -87,95 +87,95 @@ TEST(Expected_test, can_have_either_value_or_error_of_any_types)
     {
         auto result = divide(2, 1);
         EXPECT_TRUE(result);
-        EXPECT_EQ(2, result.value());
-        EXPECT_THROW(result.error(), std::runtime_error);
-        EXPECT_EQ(2, result.value_or(-1));
+        EXPECT_EQ(2, result.expected());
+        EXPECT_THROW(result.unexpected(), std::runtime_error);
+        EXPECT_EQ(2, result.expected_or(-1));
     }
 
     {
         auto result = divide(2, 0);
         EXPECT_FALSE(result);
-        EXPECT_EQ(Errors::division_by_zero, result.error());
-        EXPECT_THROW(result.value(), std::runtime_error);
-        EXPECT_EQ(-1, result.value_or(-1));
+        EXPECT_EQ(Errors::division_by_zero, result.unexpected());
+        EXPECT_THROW(result.expected(), std::runtime_error);
+        EXPECT_EQ(-1, result.expected_or(-1));
     }
 }
 
-TEST(Expected_test, can_be_copied)
+TEST(Optional_test, can_be_copied)
 {
     using namespace erroc;
 
     {
-        Expected<int, double> result = 1;
-        Expected<int, double> copied_result(result);
+        Optional<int, double> result = 1;
+        Optional<int, double> copied_result(result);
 
         EXPECT_TRUE(result);
-        EXPECT_EQ(1, result.value());
+        EXPECT_EQ(1, result.expected());
 
         EXPECT_TRUE(copied_result);
-        EXPECT_EQ(1, copied_result.value());
+        EXPECT_EQ(1, copied_result.expected());
         
         copied_result = result;
 
         EXPECT_TRUE(copied_result);
-        EXPECT_EQ(1, copied_result.value());
+        EXPECT_EQ(1, copied_result.expected());
     }
 
     {
-        Expected<int, double> result = 1.1;
-        Expected<int, double> copied_result(result);
+        Optional<int, double> result = 1.1;
+        Optional<int, double> copied_result(result);
 
         EXPECT_FALSE(result);
-        EXPECT_EQ(1.1, result.error());
+        EXPECT_EQ(1.1, result.unexpected());
 
         EXPECT_FALSE(copied_result);
-        EXPECT_EQ(1.1, copied_result.error());
+        EXPECT_EQ(1.1, copied_result.unexpected());
 
         copied_result = result;
 
         EXPECT_FALSE(copied_result);
-        EXPECT_EQ(1.1, copied_result.error());
+        EXPECT_EQ(1.1, copied_result.unexpected());
     }
 }
 
-TEST(Expected_test, can_be_moved)
+TEST(Optional_test, can_be_moved)
 {
     using namespace erroc;
 
     {
-        Expected<int, double> result = 1;
-        Expected<int, double> moved_result(std::move(result));
+        Optional<int, double> result = 1;
+        Optional<int, double> moved_result(std::move(result));
 
         EXPECT_TRUE(moved_result);
-        EXPECT_EQ(1, moved_result.value());
-        EXPECT_THROW(moved_result.error(), std::runtime_error);
+        EXPECT_EQ(1, moved_result.expected());
+        EXPECT_THROW(moved_result.unexpected(), std::runtime_error);
 
-        Expected<int, double> other_result = 2;
+        Optional<int, double> other_result = 2;
         moved_result = std::move(other_result);
 
         EXPECT_TRUE(moved_result);
-        EXPECT_EQ(2, moved_result.value());
-        EXPECT_THROW(moved_result.error(), std::runtime_error);
+        EXPECT_EQ(2, moved_result.expected());
+        EXPECT_THROW(moved_result.unexpected(), std::runtime_error);
     }
 
     {
-        Expected<int, double> result = 1.1;
-        Expected<int, double> moved_result(result);
+        Optional<int, double> result = 1.1;
+        Optional<int, double> moved_result(result);
 
         EXPECT_FALSE(moved_result);
-        EXPECT_EQ(1.1, moved_result.error());
-        EXPECT_THROW(moved_result.value(), std::runtime_error);
+        EXPECT_EQ(1.1, moved_result.unexpected());
+        EXPECT_THROW(moved_result.expected(), std::runtime_error);
 
-        Expected<int, double> other_result = 2.2;
+        Optional<int, double> other_result = 2.2;
         moved_result = other_result;
 
         EXPECT_FALSE(moved_result);
-        EXPECT_EQ(2.2, moved_result.error());
-        EXPECT_THROW(moved_result.value(), std::runtime_error);
+        EXPECT_EQ(2.2, moved_result.unexpected());
+        EXPECT_THROW(moved_result.expected(), std::runtime_error);
     }
 }
 
-TEST(Expected_test, have_monadic_oprations)
+TEST(Optional_test, have_monadic_oprations)
 {
     using namespace erroc;
 
@@ -189,7 +189,7 @@ TEST(Expected_test, have_monadic_oprations)
         division_failed
     };
 
-    auto divide = [](double a, double b) -> Expected<double, Errors> {
+    auto divide = [](double a, double b) -> Optional<double, Errors> {
         if (b == 0) {
             return Errors::division_by_zero;
         }
@@ -208,7 +208,7 @@ TEST(Expected_test, have_monadic_oprations)
             .and_then(to_int);
 
         EXPECT_TRUE(result);
-        EXPECT_EQ(1, result.value());
+        EXPECT_EQ(1, result.expected());
     }
 
     {
@@ -217,7 +217,7 @@ TEST(Expected_test, have_monadic_oprations)
             .or_else(seem);
 
         EXPECT_FALSE(result);
-        EXPECT_EQ(Other_errors::division_failed, result.error());
+        EXPECT_EQ(Other_errors::division_failed, result.unexpected());
     }
 
     std::stringstream ss{};
@@ -235,7 +235,7 @@ TEST(Expected_test, have_monadic_oprations)
             .or_else(report_reason);
 
         EXPECT_TRUE(result);
-        EXPECT_EQ(1.5, result.value());
+        EXPECT_EQ(1.5, result.expected());
 
         EXPECT_EQ("result = 1.5", ss.str());
     }
@@ -250,7 +250,7 @@ TEST(Expected_test, have_monadic_oprations)
             .or_else(report_reason);
 
         EXPECT_FALSE(result);
-        EXPECT_EQ(Errors::division_by_zero, result.error());
+        EXPECT_EQ(Errors::division_by_zero, result.unexpected());
 
         EXPECT_EQ("operation failed: division by zero", ss.str());
     }
@@ -270,14 +270,14 @@ TEST(Optional_test, can_have_either_value_or_not)
     {
         auto result = whole_divide(4, 2);
         EXPECT_TRUE(result);
-        EXPECT_EQ(2, result.value());
-        EXPECT_EQ(2, result.value_or(-1));
+        EXPECT_EQ(2, result.expected());
+        EXPECT_EQ(2, result.expected_or(-1));
     }
 
     {
         auto result = whole_divide(3, 2);
         EXPECT_FALSE(result);
-        EXPECT_THROW(result.value(), std::runtime_error);
-        EXPECT_EQ(-1, result.value_or(-1));
+        EXPECT_THROW(result.expected(), std::runtime_error);
+        EXPECT_EQ(-1, result.expected_or(-1));
     }
 }
