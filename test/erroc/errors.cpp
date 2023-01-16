@@ -262,7 +262,7 @@ TEST(Optional_test, can_have_either_value_or_not)
 
     auto whole_divide = [](int a, int b) -> Optional<int> {
         if (a % b != 0) {
-            return {};
+            return None_option{};
         }
         return a / b;
     };
