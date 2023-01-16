@@ -204,7 +204,7 @@ namespace erroc {
             }
 
             template <typename Unary_op>
-            [[nodiscard]] auto and_then(Unary_op op) const
+            [[nodiscard]] auto and_then(Unary_op&& op) const
             {
                 if (has_value_) {
                     return Expected<decltype(op(value_)), E>(op(value_));
@@ -213,7 +213,7 @@ namespace erroc {
             }
 
             template <typename Unary_op>
-            [[nodiscard]] auto and_then(Unary_op op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.value())) >
+            [[nodiscard]] auto and_then(Unary_op&& op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.value())) >
             {
                 if (has_value_) {
                     op(value_);
@@ -223,7 +223,7 @@ namespace erroc {
             }
 
             template <typename Unary_op>
-            [[nodiscard]] auto or_else(Unary_op op) const
+            [[nodiscard]] auto or_else(Unary_op&& op) const
             {
                 if (has_value_) {
                     return Expected<T, decltype(op(error_))>(value_);
@@ -232,7 +232,7 @@ namespace erroc {
             }
 
             template <typename Unary_op>
-            [[nodiscard]] auto or_else(Unary_op op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.error())) >
+            [[nodiscard]] auto or_else(Unary_op&& op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.error())) >
             {
                 if (has_value_) {
                     return *this;
