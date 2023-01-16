@@ -6,55 +6,66 @@
 
 #include <erroc/errors.h>
 
-TEST(Errors_test, core_expect_not_throwing_exception_when_condition_is_true)
+class Erroc_expect : public testing::Test {
+protected:
+    using Selected_exception = std::runtime_error;
+
+    const bool true_condition_{ true };
+    const bool false_condition_{ false };
+
+    const std::regex error_message_pattern_regex_ = std::regex("^'.+' failed on '.+' at line:[0-9]+@.+@.+ with message: .+$");
+};
+
+TEST_F(Erroc_expect, not_throw_exception_if_condition_is_true)
 {
-    EXPECT_NO_THROW(ERROC_THROW_IF_FALSE(0 == 0, std::runtime_error));
+    EXPECT_NO_THROW(ERROC_EXPECT(true_condition_, Selected_exception));
 }
 
-TEST(Errors_test, core_except_throws_specified_exception_when_condition_fails)
+TEST_F(Erroc_expect, throw_exception_if_condition_is_false)
 {
-    EXPECT_THROW(ERROC_THROW_IF_FALSE(0 == 1, std::runtime_error), std::runtime_error);
+    EXPECT_THROW(ERROC_EXPECT(false_condition_, Selected_exception), Selected_exception);
 }
 
-TEST(Errors_test, core_expect_throws_an_exception_with_specific_description)
+TEST_F(Erroc_expect, throws_an_exception_with_specific_format)
 {
     try {
-        ERROC_THROW_IF_FALSE(0 == 1, std::runtime_error, "some message with optional %d value", 0);
+        ERROC_EXPECT(false_condition_, Selected_exception, "some message with optional %d value", 0);
         FAIL();
     }
-    catch (const std::runtime_error& ex) {
-        const std::regex re("^'.+' failed on '.+' at line:[0-9]+@.+@.+ with message: .+$");
-        EXPECT_TRUE(std::regex_match(ex.what(), re));
+    catch (const Selected_exception& ex) {
+        EXPECT_TRUE(std::regex_match(ex.what(), error_message_pattern_regex_));
     }
 }
 
-TEST(Errors_cpp_test, core_expect_not_throwing_exception_when_condition_is_true)
+class Errocpp_expect : public Erroc_expect {
+};
+
+TEST_F(Errocpp_expect, not_throw_exception_if_condition_is_true)
 {
 #ifdef __unix__
-    EXPECT_NO_THROW((ERROCPP_THROW_IF_FALSE(0 == 0, std::runtime_error)));
+    EXPECT_NO_THROW((ERROCPP_EXPECT(true_condition_, Selected_exception)));
 #elif defined(_WIN32) || defined(_WIN64)
-    EXPECT_NO_THROW(ERROCPP_THROW_IF_FALSE(0 == 0, std::runtime_error));
+    EXPECT_NO_THROW(ERROCPP_EXPECT(true_condition_, Selected_exception));
 #endif
 }
 
-TEST(Errors_cpp_test, core_except_throws_specified_exception_when_condition_fails)
+TEST_F(Errocpp_expect, throw_exception_if_condition_is_false)
 {
 #ifdef __unix__
-    EXPECT_THROW((ERROCPP_THROW_IF_FALSE(0 == 1, std::runtime_error)), std::runtime_error);
+    EXPECT_THROW((ERROCPP_EXPECT(false_condition_, Selected_exception)), Selected_exception);
 #elif defined(_WIN32) || defined(_WIN64)
-    EXPECT_THROW(ERROCPP_THROW_IF_FALSE(0 == 1, std::runtime_error), std::runtime_error);
+    EXPECT_THROW(ERROCPP_EXPECT(false_condition_, Selected_exception), Selected_exception);
 #endif
 }
 
-TEST(Errors_cpp_test, core_expect_throws_an_exception_with_specific_description)
+TEST_F(Errocpp_expect, throws_an_exception_with_specific_format)
 {
     try {
-        ERROCPP_THROW_IF_FALSE(0 == 1, std::runtime_error, << "some message with optional " << 0 << " value");
+        ERROCPP_EXPECT(false_condition_, Selected_exception, << "some message with optional " << 0 << " value");
         FAIL();
     }
-    catch (const std::runtime_error& ex) {
-        const std::regex re("^'.+' failed on '.+' at line:[0-9]+@.+@.+ with message: .+$");
-        EXPECT_TRUE(std::regex_match(ex.what(), re));
+    catch (const Selected_exception& ex) {
+        EXPECT_TRUE(std::regex_match(ex.what(), error_message_pattern_regex_));
     }
 }
 

@@ -31,12 +31,12 @@ namespace erroc {
 }
 
 #ifdef __unix__
-#define ERROC_THROW_IF_FALSE(condition,exception_type,...) \
+#define ERROC_EXPECT(condition,exception_type,...) \
     if(!(condition)) { \
         erroc::details::format_and_throw<exception_type>(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__ __VA_OPT__(, __VA_ARGS__)); \
     }
 #elif defined(_WIN32) || defined(_WIN64)
-#define ERROC_THROW_IF_FALSE(condition,exception_type,...) \
+#define ERROC_EXPECT(condition,exception_type,...) \
     if(!(condition)) { \
         erroc::details::format_and_throw<exception_type>(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__, __VA_ARGS__); \
     }
@@ -80,7 +80,7 @@ namespace erroc {
 #define _VA_NARGS(...) _NARGS_1(_AUGMENTER(__VA_ARGS__))
 #endif
 
-#define ERROCPP_THROW_IF_FALSE(condition,exception_type,...) \
+#define ERROCPP_EXPECT(condition,exception_type,...) \
     {if (!(condition)) { \
         constexpr std::int64_t length{256}; \
         char buffer[length]; \
@@ -184,21 +184,23 @@ namespace erroc {
 
             [[nodiscard]] const T& value() const
             {
-                ERROC_THROW_IF_FALSE(has_value_, std::runtime_error, "expected value not present");
+                ERROC_EXPECT(has_value_, std::runtime_error, "expected value not present");
                 return value_;
             }
 
             [[nodiscard]] const E& error() const
             {
-                ERROC_THROW_IF_FALSE(!has_value_, std::runtime_error, "expected error not present");
+                ERROC_EXPECT(!has_value_, std::runtime_error, "expected error not present");
                 return error_;
             }
 
-            [[nodiscard]] T value_or(const T& other) const
+            template <typename U>
+            [[nodiscard]] T value_or(const U& other) const
             {
                 return has_value_ ? value_ : other;
             }
-            [[nodiscard]] T value_or(T&& other) const
+            template <typename U>
+            [[nodiscard]] T value_or(U&& other) const
             {
                 return has_value_ ? value_ : std::move(other);
             }
