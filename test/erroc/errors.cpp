@@ -285,7 +285,6 @@ TEST(Optional_test, can_have_either_value_or_not)
 TEST(Optional_test, can_be_compared)
 {
     using namespace erroc;
-
     Optional<int, double> opt1 = 110;
     Optional<char, float> opt2 = 'n';
 
@@ -332,5 +331,39 @@ TEST(Optional_test, can_be_compared)
         EXPECT_TRUE(nopt1 >= nopt2);
         EXPECT_FALSE(opt1 >= nopt1);
         EXPECT_FALSE(opt2 >= nopt2);
+    }
+}
+
+TEST(Optional_test, destroys_active_union_value)
+{
+    using namespace erroc;
+
+    class Dummy {
+    public:
+        Dummy(bool& destroyed)
+            : destoryed_(destroyed)
+        {
+        }
+        ~Dummy()
+        { 
+            destoryed_ = true;
+        }
+        bool& destoryed_;
+    };
+
+    {
+        bool destroyed{ false };
+        {
+            Optional<Dummy, None_option> opt{ Dummy(destroyed) };
+        }
+        EXPECT_TRUE(destroyed);
+    }
+
+    {
+        bool destroyed{ false };
+        {
+            Optional<None_option, Dummy> opt{ Dummy(destroyed) };
+        }
+        EXPECT_TRUE(destroyed);
     }
 }

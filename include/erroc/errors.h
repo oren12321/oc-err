@@ -97,10 +97,10 @@ namespace erroc {
 
 namespace erroc {
     namespace details {
-        struct Null_option {
+        struct None_option {
         };
 
-        template <typename T1, typename T2 = Null_option>
+        template <typename T1, typename T2 = None_option>
         class Optional {
         public:
             Optional(const T1& expected)
@@ -122,7 +122,7 @@ namespace erroc {
             }
 
             Optional() noexcept
-                : Optional(Null_option{})
+                : Optional(None_option{})
             {
             }
 
@@ -175,7 +175,15 @@ namespace erroc {
                 return *this;
             }
 
-            virtual ~Optional() = default;
+            virtual ~Optional()
+            {
+                if (has_expected_) {
+                    expected_.~T1();
+                }
+                else {
+                    unexpected_.~T2();
+                }
+            }
 
             [[nodiscard]] explicit operator bool() const noexcept
             {
@@ -312,7 +320,7 @@ namespace erroc {
         }
     }
 
-    using details::Null_option;
+    using details::None_option;
     using details::Optional;
 }
 
