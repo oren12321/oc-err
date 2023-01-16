@@ -97,6 +97,9 @@ namespace erroc {
 
 namespace erroc {
     namespace details {
+        struct Null_error {
+        };
+
         template <typename T, typename E>
         class Expected {
         public:
@@ -115,6 +118,11 @@ namespace erroc {
             }
             Expected(E&& error) noexcept
                 : error_(std::move(error)), has_value_(false)
+            {
+            }
+
+            Expected() noexcept
+                : Expected(Null_error{})
             {
             }
 
@@ -234,8 +242,6 @@ namespace erroc {
             }
 
         private:
-            Expected() = default;
-
             union {
                 T value_;
                 E error_;
@@ -243,63 +249,13 @@ namespace erroc {
             bool has_value_{ false };
         };
 
-
-        struct Nullopt {
-        };
-
         template <typename T>
-        class Optional {
-        public:
-            Optional(const T& value) noexcept
-                : value_(value), has_value_(true)
-            {
-            }
-            Optional(T&& value) noexcept
-                : value_(std::move(value)), has_value_(true)
-            {
-            }
-
-            Optional(const Nullopt& value) noexcept
-                : has_value_(false)
-            {
-            }
-
-            Optional() noexcept
-                : Optional(Nullopt{})
-            {
-            }
-
-            Optional(const Optional&) = default;
-            Optional& operator=(const Optional&) = default;
-            Optional(Optional&&) = default;
-            Optional& operator=(Optional&&) = default;
-            virtual ~Optional() = default;
-
-            [[nodiscard]] explicit operator bool() const noexcept {
-                return has_value_;
-            }
-
-            [[nodiscard]] const T& value() const {
-                ERROC_THROW_IF_FALSE(has_value_, std::runtime_error, "invalid value access");
-                return value_;
-            }
-
-            [[nodiscard]] T value_or(const T& other) const noexcept {
-                return has_value_ ? value_ : other;
-            }
-            [[nodiscard]] T value_or(T&& other) const noexcept {
-                return has_value_ ? value_ : std::move(other);
-            }
-
-        private:
-            T value_;
-            bool has_value_{ false };
-        };
+        using Optional = Expected<T, Null_error>;
     }
 
     using details::Expected;
 
-    using details::Nullopt;
+    using details::Null_error;
     using details::Optional;
 }
 
