@@ -54,7 +54,7 @@ namespace erroc {
                 this->setp(buffer, buffer + length);
             }
 
-            std::int64_t written_size() const
+            [[nodiscard]] std::int64_t written_size() const
             {
                 return this->pptr() - this->pbase();
             }
@@ -184,13 +184,13 @@ namespace erroc {
 
             [[nodiscard]] const T& value() const
             {
-                ERROC_THROW_IF_FALSE(has_value_, std::runtime_error, "invalid value access");
+                ERROC_THROW_IF_FALSE(has_value_, std::runtime_error, "expected value not present");
                 return value_;
             }
 
             [[nodiscard]] const E& error() const
             {
-                ERROC_THROW_IF_FALSE(!has_value_, std::runtime_error, "invalid error access");
+                ERROC_THROW_IF_FALSE(!has_value_, std::runtime_error, "expected error not present");
                 return error_;
             }
 
