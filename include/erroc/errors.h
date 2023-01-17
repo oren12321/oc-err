@@ -100,6 +100,11 @@ namespace erroc {
         struct None_option {
         };
 
+        [[nodiscard]] inline bool operator==(const None_option& lhs, const None_option& rhs)
+        {
+            return true;
+        }
+
         template <typename T = None_option>
         class Unexpected {
         public:
@@ -126,129 +131,130 @@ namespace erroc {
             T value_;
         };
 
-        template <typename T1, typename T2 = None_option>
-        class Optional {
+        template <typename T, typename E = None_option>
+            requires (!std::is_same_v<None_option, T>)
+        class Expected {
         public:
-            Optional(const T1& expected)
-                : expected_(expected), has_expected_(true)
+            Expected(const T& value)
+                : value_(value), has_value_(true)
             {
             }
-            Optional(T1&& expected) noexcept
-                : expected_(std::move(expected)), has_expected_(true)
-            {
-            }
-
-            Optional(const Unexpected<T2>& unexpected)
-                : unexpected_(unexpected.value()), has_expected_(false)
-            {
-            }
-            Optional(Unexpected<T2>&& unexpected) noexcept
-                : unexpected_(std::move(unexpected.value())), has_expected_(false)
+            Expected(T&& value) noexcept
+                : value_(std::move(value)), has_value_(true)
             {
             }
 
-            Optional(const Optional& other)
-                : has_expected_(other.has_expected_)
+            Expected(const Unexpected<E>& error)
+                : error_(error.value()), has_value_(false)
+            {
+            }
+            Expected(Unexpected<E>&& error) noexcept
+                : error_(std::move(error.value())), has_value_(false)
+            {
+            }
+
+            Expected(const Expected& other)
+                : has_value_(other.has_value_)
             {
                 if (other) {
-                    expected_ = other.expected_;
+                    value_ = other.value_;
                 }
                 else {
-                    unexpected_ = other.unexpected_;
+                    error_ = other.error_;
                 }
             }
-            Optional& operator=(const Optional& other)
+            Expected& operator=(const Expected& other)
             {
                 if (&other == this) {
                     return *this;
                 }
 
-                Optional tmp(other);
+                Expected tmp(other);
                 *this = std::move(tmp);
 
                 return *this;
             }
 
-            Optional(Optional&& other) noexcept
-                : has_expected_(other.has_expected_)
+            Expected(Expected&& other) noexcept
+                : has_value_(other.has_value_)
             {
                 if (other) {
-                    expected_ = std::move(other.expected_);
+                    value_ = std::move(other.value_);
                 }
                 else {
-                    unexpected_ = std::move(other.unexpected_);
+                    error_ = std::move(other.error_);
                 }
             }
-            Optional& operator=(Optional&& other) noexcept
+            Expected& operator=(Expected&& other) noexcept
             {
                 if (&other == this) {
                     return *this;
                 }
 
-                has_expected_ = other.has_expected_;
+                has_value_ = other.has_value_;
                 if (other) {
-                    expected_ = std::move(other.expected_);
+                    value_ = std::move(other.value_);
                 }
                 else {
-                    unexpected_ = std::move(other.unexpected_);
+                    error_ = std::move(other.error_);
                 }
 
                 return *this;
             }
 
-            virtual ~Optional()
+            virtual ~Expected()
             {
-                if (has_expected_) {
-                    expected_.~T1();
+                if (has_value_) {
+                    value_.~T();
                 }
                 else {
-                    unexpected_.~T2();
+                    error_.~E();
                 }
             }
 
             [[nodiscard]] explicit operator bool() const noexcept
             {
-                return has_expected_;
+                return has_value_;
             }
 
-            [[nodiscard]] const T1& expected() const
+            [[nodiscard]] const T& value() const
             {
-                ERROC_EXPECT(has_expected_, std::runtime_error, "expected value not present");
-                return expected_;
+                ERROC_EXPECT(has_value_, std::runtime_error, "value value not present");
+                return value_;
             }
 
-            [[nodiscard]] const T2& unexpected() const
+            [[nodiscard]] const E& error() const
             {
-                ERROC_EXPECT(!has_expected_, std::runtime_error, "unexpected value not present");
-                return unexpected_;
+                ERROC_EXPECT(!has_value_, std::runtime_error, "error value not present");
+                return error_;
             }
 
             template <typename U>
-            [[nodiscard]] T1 expected_or(const U& other) const
+            [[nodiscard]] T value_or(const U& other) const
             {
-                return has_expected_ ? expected_ : other;
+                return has_value_ ? value_ : other;
             }
             template <typename U>
-            [[nodiscard]] T1 expected_or(U&& other) const
+            [[nodiscard]] T value_or(U&& other) const
             {
-                return has_expected_ ? expected_ : std::move(other);
+                return has_value_ ? value_ : std::move(other);
             }
 
             template <typename Unary_op>
             [[nodiscard]] auto and_then(Unary_op&& op) const
             {
-                if (has_expected_) {
-                    return Optional<decltype(op(expected_)), T2>(op(expected_));
+                if (has_value_) {
+                    return Expected<decltype(op(value_)), E>(op(value_));
                 }
-                return Optional<decltype(op(expected_)), T2>(unexpected_);
+                return Expected<decltype(op(value_)), E>(error_);
             }
 
             template <typename Unary_op>
-            [[nodiscard]] auto and_then(Unary_op&& op) const requires std::is_void_v<decltype(op(Optional<T1, T2>{}.expected())) >
+            [[nodiscard]] auto and_then(Unary_op&& op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.value())) >
             {
-                if (has_expected_) {
-                    op(expected_);
-                    return Optional<T1, T2>(expected_);
+                if (has_value_) {
+                    op(value_);
+                    return Expected<T, E>(value_);
                 }
                 return *this;
             }
@@ -256,98 +262,98 @@ namespace erroc {
             template <typename Unary_op>
             [[nodiscard]] auto or_else(Unary_op&& op) const
             {
-                if (has_expected_) {
-                    return Optional<T1, decltype(op(unexpected_))>(expected_);
+                if (has_value_) {
+                    return Expected<T, decltype(op(error_))>(value_);
                 }
-                return Optional<T1, decltype(op(unexpected_))>(Unexpected<decltype(op(unexpected_))>(op(unexpected_)));
+                return Expected<T, decltype(op(error_))>(Unexpected<decltype(op(error_))>(op(error_)));
             }
 
             template <typename Unary_op>
-            [[nodiscard]] auto or_else(Unary_op&& op) const requires std::is_void_v<decltype(op(Optional<T1, T2>{}.unexpected())) >
+            [[nodiscard]] auto or_else(Unary_op&& op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.error())) >
             {
-                if (has_expected_) {
+                if (has_value_) {
                     return *this;
                 }
-                op(unexpected_);
-                return Optional<T1, T2>(Unexpected<T2>(unexpected_));
+                op(error_);
+                return Expected<T, E>(Unexpected<E>(error_));
             }
 
         private:
-            Optional() noexcept
-                : Optional(None_option{})
+            Expected() noexcept
+                : Expected(None_option{})
             {
             }
 
             union {
-                T1 expected_;
-                T2 unexpected_;
+                T value_;
+                E error_;
             };
-            bool has_expected_{ false };
+            bool has_value_{ false };
         };
 
-        template <typename T1, typename T2, typename U1, typename U2>
-        [[nodiscard]] inline bool operator==(const Optional<T1, T2>& lhs, const Optional<U1, U2>& rhs)
+        template <typename T1, typename E1, typename T2, typename E2>
+        [[nodiscard]] inline bool operator==(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
             }
 
-            return lhs ? (lhs.expected() == rhs.expected()) : (lhs.unexpected() == rhs.unexpected());
+            return lhs ? (lhs.value() == rhs.value()) : (lhs.error() == rhs.error());
         }
 
-        template <typename T1, typename T2, typename U1, typename U2>
-        [[nodiscard]] inline bool operator!=(const Optional<T1, T2>& lhs, const Optional<U1, U2>& rhs)
+        template <typename T1, typename E1, typename T2, typename E2>
+        [[nodiscard]] inline bool operator!=(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return true;
             }
 
-            return lhs ? (lhs.expected() != rhs.expected()) : (lhs.unexpected() != rhs.unexpected());
+            return lhs ? (lhs.value() != rhs.value()) : (lhs.error() != rhs.error());
         }
 
-        template <typename T1, typename T2, typename U1, typename U2>
-        [[nodiscard]] inline bool operator<(const Optional<T1, T2>& lhs, const Optional<U1, U2>& rhs)
+        template <typename T1, typename E1, typename T2, typename E2>
+        [[nodiscard]] inline bool operator<(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
             }
 
-            return lhs ? (lhs.expected() < rhs.expected()) : (lhs.unexpected() < rhs.unexpected());
+            return lhs ? (lhs.value() < rhs.value()) : (lhs.error() < rhs.error());
         }
 
-        template <typename T1, typename T2, typename U1, typename U2>
-        [[nodiscard]] inline bool operator<=(const Optional<T1, T2>& lhs, const Optional<U1, U2>& rhs)
+        template <typename T1, typename E1, typename T2, typename E2>
+        [[nodiscard]] inline bool operator<=(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
             }
 
-            return lhs ? (lhs.expected() <= rhs.expected()) : (lhs.unexpected() <= rhs.unexpected());
+            return lhs ? (lhs.value() <= rhs.value()) : (lhs.error() <= rhs.error());
         }
 
-        template <typename T1, typename T2, typename U1, typename U2>
-        [[nodiscard]] inline bool operator>(const Optional<T1, T2>& lhs, const Optional<U1, U2>& rhs)
+        template <typename T1, typename E1, typename T2, typename E2>
+        [[nodiscard]] inline bool operator>(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
             }
 
-            return lhs ? (lhs.expected() > rhs.expected()) : (lhs.unexpected() > rhs.unexpected());
+            return lhs ? (lhs.value() > rhs.value()) : (lhs.error() > rhs.error());
         }
 
-        template <typename T1, typename T2, typename U1, typename U2>
-        [[nodiscard]] inline bool operator>=(const Optional<T1, T2>& lhs, const Optional<U1, U2>& rhs)
+        template <typename T1, typename E1, typename T2, typename E2>
+        [[nodiscard]] inline bool operator>=(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
             }
 
-            return lhs ? (lhs.expected() >= rhs.expected()) : (lhs.unexpected() >= rhs.unexpected());
+            return lhs ? (lhs.value() >= rhs.value()) : (lhs.error() >= rhs.error());
         }
     }
 
     using details::Unexpected;
-    using details::Optional;
+    using details::Expected;
 }
 
 #endif // ERROC_ERRORS_H

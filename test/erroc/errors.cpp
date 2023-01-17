@@ -69,7 +69,7 @@ TEST_F(Errocpp_expect, throws_an_exception_with_specific_format)
     }
 }
 
-TEST(Optional_test, can_have_either_value_or_error_of_any_types)
+TEST(Expected_test, can_have_either_value_or_error_of_any_types)
 {
     using namespace erroc;
 
@@ -77,7 +77,7 @@ TEST(Optional_test, can_have_either_value_or_error_of_any_types)
         division_by_zero
     };
 
-    auto divide = [](int a, int b) -> Optional<int, Errors> {
+    auto divide = [](int a, int b) -> Expected<int, Errors> {
         if (b == 0) {
             return Unexpected{ Errors::division_by_zero };
         }
@@ -87,95 +87,95 @@ TEST(Optional_test, can_have_either_value_or_error_of_any_types)
     {
         auto result = divide(2, 1);
         EXPECT_TRUE(result);
-        EXPECT_EQ(2, result.expected());
-        EXPECT_THROW(result.unexpected(), std::runtime_error);
-        EXPECT_EQ(2, result.expected_or(-1));
+        EXPECT_EQ(2, result.value());
+        EXPECT_THROW(result.error(), std::runtime_error);
+        EXPECT_EQ(2, result.value_or(-1));
     }
 
     {
         auto result = divide(2, 0);
         EXPECT_FALSE(result);
-        EXPECT_EQ(Errors::division_by_zero, result.unexpected());
-        EXPECT_THROW(result.expected(), std::runtime_error);
-        EXPECT_EQ(-1, result.expected_or(-1));
+        EXPECT_EQ(Errors::division_by_zero, result.error());
+        EXPECT_THROW(result.value(), std::runtime_error);
+        EXPECT_EQ(-1, result.value_or(-1));
     }
 }
 
-TEST(Optional_test, can_be_copied)
+TEST(Expected_test, can_be_copied)
 {
     using namespace erroc;
 
     {
-        Optional<int, double> result = 1;
-        Optional<int, double> copied_result(result);
+        Expected<int, double> result = 1;
+        Expected<int, double> copied_result(result);
 
         EXPECT_TRUE(result);
-        EXPECT_EQ(1, result.expected());
+        EXPECT_EQ(1, result.value());
 
         EXPECT_TRUE(copied_result);
-        EXPECT_EQ(1, copied_result.expected());
+        EXPECT_EQ(1, copied_result.value());
         
         copied_result = result;
 
         EXPECT_TRUE(copied_result);
-        EXPECT_EQ(1, copied_result.expected());
+        EXPECT_EQ(1, copied_result.value());
     }
 
     {
-        Optional<int, double> result = Unexpected(1.1);
-        Optional<int, double> copied_result(result);
+        Expected<int, double> result = Unexpected(1.1);
+        Expected<int, double> copied_result(result);
 
         EXPECT_FALSE(result);
-        EXPECT_EQ(1.1, result.unexpected());
+        EXPECT_EQ(1.1, result.error());
 
         EXPECT_FALSE(copied_result);
-        EXPECT_EQ(1.1, copied_result.unexpected());
+        EXPECT_EQ(1.1, copied_result.error());
 
         copied_result = result;
 
         EXPECT_FALSE(copied_result);
-        EXPECT_EQ(1.1, copied_result.unexpected());
+        EXPECT_EQ(1.1, copied_result.error());
     }
 }
 
-TEST(Optional_test, can_be_moved)
+TEST(Expected_test, can_be_moved)
 {
     using namespace erroc;
 
     {
-        Optional<int, double> result = 1;
-        Optional<int, double> moved_result(std::move(result));
+        Expected<int, double> result = 1;
+        Expected<int, double> moved_result(std::move(result));
 
         EXPECT_TRUE(moved_result);
-        EXPECT_EQ(1, moved_result.expected());
-        EXPECT_THROW(moved_result.unexpected(), std::runtime_error);
+        EXPECT_EQ(1, moved_result.value());
+        EXPECT_THROW(moved_result.error(), std::runtime_error);
 
-        Optional<int, double> other_result = 2;
+        Expected<int, double> other_result = 2;
         moved_result = std::move(other_result);
 
         EXPECT_TRUE(moved_result);
-        EXPECT_EQ(2, moved_result.expected());
-        EXPECT_THROW(moved_result.unexpected(), std::runtime_error);
+        EXPECT_EQ(2, moved_result.value());
+        EXPECT_THROW(moved_result.error(), std::runtime_error);
     }
 
     {
-        Optional<int, double> result = Unexpected(1.1);
-        Optional<int, double> moved_result(result);
+        Expected<int, double> result = Unexpected(1.1);
+        Expected<int, double> moved_result(result);
 
         EXPECT_FALSE(moved_result);
-        EXPECT_EQ(1.1, moved_result.unexpected());
-        EXPECT_THROW(moved_result.expected(), std::runtime_error);
+        EXPECT_EQ(1.1, moved_result.error());
+        EXPECT_THROW(moved_result.value(), std::runtime_error);
 
-        Optional<int, double> other_result = Unexpected(2.2);
+        Expected<int, double> other_result = Unexpected(2.2);
         moved_result = other_result;
 
         EXPECT_FALSE(moved_result);
-        EXPECT_EQ(2.2, moved_result.unexpected());
-        EXPECT_THROW(moved_result.expected(), std::runtime_error);
+        EXPECT_EQ(2.2, moved_result.error());
+        EXPECT_THROW(moved_result.value(), std::runtime_error);
     }
 }
 
-TEST(Optional_test, have_monadic_oprations)
+TEST(Expected_test, have_monadic_oprations)
 {
     using namespace erroc;
 
@@ -189,7 +189,7 @@ TEST(Optional_test, have_monadic_oprations)
         division_failed
     };
 
-    auto divide = [](double a, double b) -> Optional<double, Errors> {
+    auto divide = [](double a, double b) -> Expected<double, Errors> {
         if (b == 0) {
             return Unexpected{ Errors::division_by_zero };
         }
@@ -208,7 +208,7 @@ TEST(Optional_test, have_monadic_oprations)
             .and_then(to_int);
 
         EXPECT_TRUE(result);
-        EXPECT_EQ(1, result.expected());
+        EXPECT_EQ(1, result.value());
     }
 
     {
@@ -217,7 +217,7 @@ TEST(Optional_test, have_monadic_oprations)
             .or_else(seem);
 
         EXPECT_FALSE(result);
-        EXPECT_EQ(Other_errors::division_failed, result.unexpected());
+        EXPECT_EQ(Other_errors::division_failed, result.error());
     }
 
     std::stringstream ss{};
@@ -235,7 +235,7 @@ TEST(Optional_test, have_monadic_oprations)
             .or_else(report_reason);
 
         EXPECT_TRUE(result);
-        EXPECT_EQ(1.5, result.expected());
+        EXPECT_EQ(1.5, result.value());
 
         EXPECT_EQ("result = 1.5", ss.str());
     }
@@ -250,17 +250,17 @@ TEST(Optional_test, have_monadic_oprations)
             .or_else(report_reason);
 
         EXPECT_FALSE(result);
-        EXPECT_EQ(Errors::division_by_zero, result.unexpected());
+        EXPECT_EQ(Errors::division_by_zero, result.error());
 
         EXPECT_EQ("operation failed: division by zero", ss.str());
     }
 }
 
-TEST(Optional_test, can_have_either_value_or_not)
+TEST(Expected_test, can_have_either_value_or_not)
 {
     using namespace erroc;
 
-    auto whole_divide = [](int a, int b) -> Optional<int> {
+    auto whole_divide = [](int a, int b) -> Expected<int> {
         if (a % b != 0) {
             return Unexpected();
         }
@@ -270,26 +270,26 @@ TEST(Optional_test, can_have_either_value_or_not)
     {
         auto result = whole_divide(4, 2);
         EXPECT_TRUE(result);
-        EXPECT_EQ(2, result.expected());
-        EXPECT_EQ(2, result.expected_or(-1));
+        EXPECT_EQ(2, result.value());
+        EXPECT_EQ(2, result.value_or(-1));
     }
 
     {
         auto result = whole_divide(3, 2);
         EXPECT_FALSE(result);
-        EXPECT_THROW(result.expected(), std::runtime_error);
-        EXPECT_EQ(-1, result.expected_or(-1));
+        EXPECT_THROW(result.value(), std::runtime_error);
+        EXPECT_EQ(-1, result.value_or(-1));
     }
 }
 
-TEST(Optional_test, can_be_compared)
+TEST(Expected_test, can_be_compared)
 {
     using namespace erroc;
-    Optional<int, double> opt1 = 110;
-    Optional<char, float> opt2 = 'n';
+    Expected<int, double> opt1 = 110;
+    Expected<char, float> opt2 = 'n';
 
-    Optional<char, double> nopt1 = Unexpected(1.);
-    Optional<int, float> nopt2 = Unexpected(1.f);
+    Expected<char, double> nopt1 = Unexpected(1.);
+    Expected<int, float> nopt2 = Unexpected(1.f);
 
     {
         EXPECT_TRUE(opt1 == opt2);
@@ -334,7 +334,7 @@ TEST(Optional_test, can_be_compared)
     }
 }
 
-TEST(Optional_test, destroys_active_union_value)
+TEST(Expected_test, destroys_active_union_value)
 {
     using namespace erroc;
 
@@ -355,7 +355,7 @@ TEST(Optional_test, destroys_active_union_value)
 
     {
         {
-            Optional<Dummy> opt{ Dummy(destroyed) };
+            Expected<Dummy> opt{ Dummy(destroyed) };
             destroyed = false;
         }
         EXPECT_TRUE(destroyed);
@@ -363,7 +363,7 @@ TEST(Optional_test, destroys_active_union_value)
 
     {
         {
-            Optional<int, Dummy> opt{ Unexpected(Dummy(destroyed)) };
+            Expected<int, Dummy> opt{ Unexpected(Dummy(destroyed)) };
             destroyed = false;
         }
         EXPECT_TRUE(destroyed);
