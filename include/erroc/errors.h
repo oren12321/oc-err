@@ -100,6 +100,32 @@ namespace erroc {
         struct None_option {
         };
 
+        template <typename T = None_option>
+        class Unexpected {
+        public:
+            Unexpected(const T& value = None_option{})
+                : value_(value)
+            {
+            }
+            Unexpected(T&& value)
+                : value_(std::move(value))
+            {
+            }
+            Unexpected(const Unexpected&) = default;
+            Unexpected& operator=(const Unexpected&) = default;
+            Unexpected(Unexpected&&) = default;
+            Unexpected& operator=(Unexpected&&) = default;
+            virtual ~Unexpected() = default;
+
+            [[nodiscard]] const T& value() const noexcept
+            {
+                return value_;
+            }
+
+        private:
+            T value_;
+        };
+
         template <typename T1, typename T2 = None_option>
         class Optional {
         public:
@@ -112,17 +138,12 @@ namespace erroc {
             {
             }
 
-            Optional(const T2& unexpected)
-                : unexpected_(unexpected), has_expected_(false)
+            Optional(const Unexpected<T2>& unexpected)
+                : unexpected_(unexpected.value()), has_expected_(false)
             {
             }
-            Optional(T2&& unexpected) noexcept
-                : unexpected_(std::move(unexpected)), has_expected_(false)
-            {
-            }
-
-            Optional() noexcept
-                : Optional(None_option{})
+            Optional(Unexpected<T2>&& unexpected) noexcept
+                : unexpected_(std::move(unexpected.value())), has_expected_(false)
             {
             }
 
@@ -238,7 +259,7 @@ namespace erroc {
                 if (has_expected_) {
                     return Optional<T1, decltype(op(unexpected_))>(expected_);
                 }
-                return Optional<T1, decltype(op(unexpected_))>(op(unexpected_));
+                return Optional<T1, decltype(op(unexpected_))>(Unexpected<decltype(op(unexpected_))>(op(unexpected_)));
             }
 
             template <typename Unary_op>
@@ -248,10 +269,15 @@ namespace erroc {
                     return *this;
                 }
                 op(unexpected_);
-                return Optional<T1, T2>(unexpected_);
+                return Optional<T1, T2>(Unexpected<T2>(unexpected_));
             }
 
         private:
+            Optional() noexcept
+                : Optional(None_option{})
+            {
+            }
+
             union {
                 T1 expected_;
                 T2 unexpected_;
@@ -320,7 +346,7 @@ namespace erroc {
         }
     }
 
-    using details::None_option;
+    using details::Unexpected;
     using details::Optional;
 }
 

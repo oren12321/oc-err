@@ -79,7 +79,7 @@ TEST(Optional_test, can_have_either_value_or_error_of_any_types)
 
     auto divide = [](int a, int b) -> Optional<int, Errors> {
         if (b == 0) {
-            return Errors::division_by_zero;
+            return Unexpected{ Errors::division_by_zero };
         }
         return a / b;
     };
@@ -122,7 +122,7 @@ TEST(Optional_test, can_be_copied)
     }
 
     {
-        Optional<int, double> result = 1.1;
+        Optional<int, double> result = Unexpected(1.1);
         Optional<int, double> copied_result(result);
 
         EXPECT_FALSE(result);
@@ -159,14 +159,14 @@ TEST(Optional_test, can_be_moved)
     }
 
     {
-        Optional<int, double> result = 1.1;
+        Optional<int, double> result = Unexpected(1.1);
         Optional<int, double> moved_result(result);
 
         EXPECT_FALSE(moved_result);
         EXPECT_EQ(1.1, moved_result.unexpected());
         EXPECT_THROW(moved_result.expected(), std::runtime_error);
 
-        Optional<int, double> other_result = 2.2;
+        Optional<int, double> other_result = Unexpected(2.2);
         moved_result = other_result;
 
         EXPECT_FALSE(moved_result);
@@ -191,7 +191,7 @@ TEST(Optional_test, have_monadic_oprations)
 
     auto divide = [](double a, double b) -> Optional<double, Errors> {
         if (b == 0) {
-            return Errors::division_by_zero;
+            return Unexpected{ Errors::division_by_zero };
         }
         return a / b;
     };
@@ -262,7 +262,7 @@ TEST(Optional_test, can_have_either_value_or_not)
 
     auto whole_divide = [](int a, int b) -> Optional<int> {
         if (a % b != 0) {
-            return None_option{};
+            return Unexpected();
         }
         return a / b;
     };
@@ -288,8 +288,8 @@ TEST(Optional_test, can_be_compared)
     Optional<int, double> opt1 = 110;
     Optional<char, float> opt2 = 'n';
 
-    Optional<char, double> nopt1 = 1.;
-    Optional<int, float> nopt2 = 1.f;
+    Optional<char, double> nopt1 = Unexpected(1.);
+    Optional<int, float> nopt2 = Unexpected(1.f);
 
     {
         EXPECT_TRUE(opt1 == opt2);
@@ -351,18 +351,20 @@ TEST(Optional_test, destroys_active_union_value)
         bool& destoryed_;
     };
 
+    bool destroyed{ false };
+
     {
-        bool destroyed{ false };
         {
-            Optional<Dummy, None_option> opt{ Dummy(destroyed) };
+            Optional<Dummy> opt{ Dummy(destroyed) };
+            destroyed = false;
         }
         EXPECT_TRUE(destroyed);
     }
 
     {
-        bool destroyed{ false };
         {
-            Optional<None_option, Dummy> opt{ Dummy(destroyed) };
+            Optional<int, Dummy> opt{ Unexpected(Dummy(destroyed)) };
+            destroyed = false;
         }
         EXPECT_TRUE(destroyed);
     }
