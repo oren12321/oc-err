@@ -131,6 +131,12 @@ namespace erroc {
             T value_;
         };
 
+        template <typename T>
+        concept Printable_error = requires(T t)
+        {
+            {to_string(t)};
+        };
+
         template <typename T, typename E = None_option>
             requires (!std::is_same_v<None_option, T>)
         class Expected {
@@ -217,15 +223,21 @@ namespace erroc {
                 return has_value_;
             }
 
+            [[nodiscard]] const T& value() const requires Printable_error<E>
+            {
+                ERROC_EXPECT(has_value_, std::runtime_error, "value is not present, error is '%s'", to_string(error_));
+                return value_;
+            }
+
             [[nodiscard]] const T& value() const
             {
-                ERROC_EXPECT(has_value_, std::runtime_error, "value value not present");
+                ERROC_EXPECT(has_value_, std::runtime_error, "value is not present");
                 return value_;
             }
 
             [[nodiscard]] const E& error() const
             {
-                ERROC_EXPECT(!has_value_, std::runtime_error, "error value not present");
+                ERROC_EXPECT(!has_value_, std::runtime_error, "error is not present");
                 return error_;
             }
 

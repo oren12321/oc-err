@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <regex>
 #include <sstream>
+#include <string>
 
 #include <erroc/errors.h>
 
@@ -367,5 +368,37 @@ TEST(Expected_test, destroys_active_union_value)
             destroyed = false;
         }
         EXPECT_TRUE(destroyed);
+    }
+}
+
+namespace ns1 {
+    namespace details {
+        enum class Enum {
+            field,
+        };
+        const char* Enum_strings[] {
+            "field",
+        };
+        [[nodiscard]] const char* to_string(Enum code) noexcept {
+            return Enum_strings[static_cast<int>(code)];
+        }
+    }
+    using details::Enum;
+    using details::to_string;
+}
+
+TEST(Expected_test, if_error_have_to_string_implementation_it_is_printed_when_there_is_no_value)
+{
+    using namespace erroc;
+
+    Expected<int, ns1::Enum> result = Unexpected(ns1::Enum::field);
+
+    try {
+        int value = result.value();
+        FAIL();
+    }
+    catch (const std::runtime_error& ex) {
+        std::string str = ex.what();
+        EXPECT_NE(std::string::npos, str.find("'field'"));
     }
 }
