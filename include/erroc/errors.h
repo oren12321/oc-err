@@ -7,7 +7,7 @@
 
 namespace erroc {
     namespace details {
-        template <typename T, std::int64_t Buffer_size = 256>
+        template <typename T, std::int64_t Buffer_size = 512>
         void format_and_throw(const char* condition, const char* exception_type, int line, const char* function, const char* file, const char* format = nullptr, ...)
         {
             char buffer[Buffer_size];
@@ -120,7 +120,7 @@ namespace erroc {
 
 #define ERROCPP_EXPECT(condition, exception_type, ...) \
     {if (!(condition)) { \
-        constexpr std::int64_t length{256}; \
+        constexpr std::int64_t length{512}; \
         char buffer[length]; \
         erroc::details::Custom_streambuf<char> csb{ buffer, length }; \
         std::ostream os{&csb}; \
