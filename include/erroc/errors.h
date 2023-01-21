@@ -150,7 +150,7 @@ namespace erroc {
                 : value_(value)
             {
             }
-            Unexpected(T&& value)
+            Unexpected(T&& value) noexcept
                 : value_(std::move(value))
             {
             }
