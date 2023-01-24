@@ -8,7 +8,7 @@
 namespace erroc {
     namespace details {
         template <typename T, std::int64_t Buffer_size = 512>
-        void format_and_throw(const char* condition, const char* exception_type, int line, const char* function, const char* file, const char* format = nullptr, ...)
+        inline void format_and_throw(const char* condition, const char* exception_type, int line, const char* function, const char* file, const char* format = nullptr, ...)
         {
             char buffer[Buffer_size];
 
@@ -138,7 +138,7 @@ namespace erroc {
         struct None_option {
         };
 
-        [[nodiscard]] inline bool operator==(const None_option& lhs, const None_option& rhs)
+        [[nodiscard]] inline constexpr bool operator==(const None_option& lhs, const None_option& rhs)
         {
             return true;
         }
@@ -146,21 +146,21 @@ namespace erroc {
         template <typename T = None_option>
         class Unexpected {
         public:
-            Unexpected(const T& value = None_option{})
+            constexpr Unexpected(const T& value = None_option{})
                 : value_(value)
             {
             }
-            Unexpected(T&& value) noexcept
+            constexpr Unexpected(T&& value) noexcept
                 : value_(std::move(value))
             {
             }
-            Unexpected(const Unexpected&) = default;
-            Unexpected& operator=(const Unexpected&) = default;
-            Unexpected(Unexpected&&) = default;
-            Unexpected& operator=(Unexpected&&) = default;
+            constexpr Unexpected(const Unexpected&) = default;
+            constexpr Unexpected& operator=(const Unexpected&) = default;
+            constexpr Unexpected(Unexpected&&) = default;
+            constexpr Unexpected& operator=(Unexpected&&) = default;
             virtual ~Unexpected() = default;
 
-            [[nodiscard]] const T& value() const noexcept
+            [[nodiscard]] constexpr const T& value() const noexcept
             {
                 return value_;
             }
@@ -179,25 +179,25 @@ namespace erroc {
             requires (!std::is_same_v<None_option, T>)
         class Expected {
         public:
-            Expected(const T& value)
+            constexpr Expected(const T& value)
                 : value_(value), has_value_(true)
             {
             }
-            Expected(T&& value) noexcept
+            constexpr Expected(T&& value) noexcept
                 : value_(std::move(value)), has_value_(true)
             {
             }
 
-            Expected(const Unexpected<E>& error)
+            constexpr Expected(const Unexpected<E>& error)
                 : error_(error.value()), has_value_(false)
             {
             }
-            Expected(Unexpected<E>&& error) noexcept
+            constexpr Expected(Unexpected<E>&& error) noexcept
                 : error_(std::move(error.value())), has_value_(false)
             {
             }
 
-            Expected(const Expected& other)
+            constexpr Expected(const Expected& other)
                 : has_value_(other.has_value_)
             {
                 if (other) {
@@ -207,7 +207,7 @@ namespace erroc {
                     error_ = other.error_;
                 }
             }
-            Expected& operator=(const Expected& other)
+            constexpr Expected& operator=(const Expected& other)
             {
                 if (&other == this) {
                     return *this;
@@ -219,7 +219,7 @@ namespace erroc {
                 return *this;
             }
 
-            Expected(Expected&& other) noexcept
+            constexpr Expected(Expected&& other) noexcept
                 : has_value_(other.has_value_)
             {
                 if (other) {
@@ -229,7 +229,7 @@ namespace erroc {
                     error_ = std::move(other.error_);
                 }
             }
-            Expected& operator=(Expected&& other) noexcept
+            constexpr Expected& operator=(Expected&& other) noexcept
             {
                 if (&other == this) {
                     return *this;
@@ -246,7 +246,7 @@ namespace erroc {
                 return *this;
             }
 
-            virtual ~Expected()
+            virtual constexpr ~Expected()
             {
                 if (has_value_) {
                     value_.~T();
@@ -256,42 +256,42 @@ namespace erroc {
                 }
             }
 
-            [[nodiscard]] explicit operator bool() const noexcept
+            [[nodiscard]] explicit constexpr operator bool() const noexcept
             {
                 return has_value_;
             }
 
-            [[nodiscard]] const T& value() const requires Printable_error<E>
+            [[nodiscard]] constexpr const T& value() const requires Printable_error<E>
             {
                 ERROC_EXPECT(has_value_, std::runtime_error, "value is not present, error is '%s'", to_string(error_));
                 return value_;
             }
 
-            [[nodiscard]] const T& value() const
+            [[nodiscard]] constexpr const T& value() const
             {
                 ERROC_EXPECT(has_value_, std::runtime_error, "value is not present");
                 return value_;
             }
 
-            [[nodiscard]] const E& error() const
+            [[nodiscard]] constexpr const E& error() const
             {
                 ERROC_EXPECT(!has_value_, std::runtime_error, "error is not present");
                 return error_;
             }
 
             template <typename U>
-            [[nodiscard]] T value_or(const U& other) const
+            [[nodiscard]] constexpr T value_or(const U& other) const
             {
                 return has_value_ ? value_ : other;
             }
             template <typename U>
-            [[nodiscard]] T value_or(U&& other) const
+            [[nodiscard]] constexpr T value_or(U&& other) const
             {
                 return has_value_ ? value_ : std::move(other);
             }
 
             template <typename Unary_op>
-            [[nodiscard]] auto and_then(Unary_op&& op) const
+            [[nodiscard]] constexpr auto and_then(Unary_op&& op) const
             {
                 if (has_value_) {
                     return Expected<decltype(op(value_)), E>(op(value_));
@@ -300,7 +300,7 @@ namespace erroc {
             }
 
             template <typename Unary_op>
-            [[nodiscard]] auto and_then(Unary_op&& op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.value())) >
+            [[nodiscard]] constexpr auto and_then(Unary_op&& op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.value())) >
             {
                 if (has_value_) {
                     op(value_);
@@ -310,7 +310,7 @@ namespace erroc {
             }
 
             template <typename Unary_op>
-            [[nodiscard]] auto or_else(Unary_op&& op) const
+            [[nodiscard]] constexpr auto or_else(Unary_op&& op) const
             {
                 if (has_value_) {
                     return Expected<T, decltype(op(error_))>(value_);
@@ -319,7 +319,7 @@ namespace erroc {
             }
 
             template <typename Unary_op>
-            [[nodiscard]] auto or_else(Unary_op&& op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.error())) >
+            [[nodiscard]] constexpr auto or_else(Unary_op&& op) const requires std::is_void_v<decltype(op(Expected<T, E>{}.error())) >
             {
                 if (has_value_) {
                     return *this;
@@ -329,7 +329,7 @@ namespace erroc {
             }
 
         private:
-            Expected() noexcept
+            constexpr Expected() noexcept
                 : Expected(None_option{})
             {
             }
@@ -342,7 +342,7 @@ namespace erroc {
         };
 
         template <typename T1, typename E1, typename T2, typename E2>
-        [[nodiscard]] inline bool operator==(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
+        [[nodiscard]] inline constexpr bool operator==(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
@@ -352,7 +352,7 @@ namespace erroc {
         }
 
         template <typename T1, typename E1, typename T2, typename E2>
-        [[nodiscard]] inline bool operator!=(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
+        [[nodiscard]] inline constexpr bool operator!=(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return true;
@@ -362,7 +362,7 @@ namespace erroc {
         }
 
         template <typename T1, typename E1, typename T2, typename E2>
-        [[nodiscard]] inline bool operator<(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
+        [[nodiscard]] inline constexpr bool operator<(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
@@ -372,7 +372,7 @@ namespace erroc {
         }
 
         template <typename T1, typename E1, typename T2, typename E2>
-        [[nodiscard]] inline bool operator<=(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
+        [[nodiscard]] inline constexpr bool operator<=(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
@@ -382,7 +382,7 @@ namespace erroc {
         }
 
         template <typename T1, typename E1, typename T2, typename E2>
-        [[nodiscard]] inline bool operator>(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
+        [[nodiscard]] inline constexpr bool operator>(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
@@ -392,7 +392,7 @@ namespace erroc {
         }
 
         template <typename T1, typename E1, typename T2, typename E2>
-        [[nodiscard]] inline bool operator>=(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
+        [[nodiscard]] inline constexpr bool operator>=(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
