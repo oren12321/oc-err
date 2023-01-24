@@ -394,7 +394,7 @@ TEST(Expected_test, if_error_have_to_string_implementation_it_is_printed_when_th
     Expected<int, ns1::Enum> result = Unexpected(ns1::Enum::field);
 
     try {
-        int value = result.value();
+        (void)result.value();
         FAIL();
     }
     catch (const std::runtime_error& ex) {
