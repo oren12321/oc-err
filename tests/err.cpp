@@ -8,7 +8,7 @@
 #include <charconv>
 #include <ranges>
 
-#include <erroc/errors.h>
+#include <oc/err.h>
 
 class Require_test : public testing::Test {
 protected:
@@ -22,12 +22,12 @@ protected:
 
 TEST_F(Require_test, not_throw_exception_if_condition_is_true)
 {
-    EXPECT_NO_THROW(_REQUIRE(true_condition_, Selected_exception));
+    EXPECT_NO_THROW(OCERR_REQUIRE(true_condition_, Selected_exception));
 }
 
 TEST_F(Require_test, throw_exception_if_condition_is_false)
 {
-    EXPECT_THROW(_REQUIRE(false_condition_, Selected_exception), Selected_exception);
+    EXPECT_THROW(OCERR_REQUIRE(false_condition_, Selected_exception), Selected_exception);
 }
 
 struct CustomTestType {};
@@ -39,7 +39,7 @@ std::ostream& operator<<(std::ostream& os, const CustomTestType& ctt) {
 TEST_F(Require_test, throws_an_exception_with_specific_format)
 {
     try {
-        _REQUIRE(false_condition_, Selected_exception, (std::stringstream{} << CustomTestType{}).str());
+        OCERR_REQUIRE(false_condition_, Selected_exception, (std::stringstream{} << CustomTestType{}).str());
         FAIL();
     }
     catch (const Selected_exception& ex) {
@@ -49,9 +49,9 @@ TEST_F(Require_test, throws_an_exception_with_specific_format)
 
 namespace optional_test_dummies {
     template <typename T>
-    using Optional = computoc::Expected<T>;
+    using Optional = oc::Expected<T>;
 
-    constexpr computoc::None_option nullopt{};
+    constexpr oc::None_option nullopt{};
 
     auto to_int(std::string_view sv) -> Optional<int>
     {
@@ -108,14 +108,14 @@ TEST(Expected_test, using_Expected_type_as_Optional)
 namespace expected_test_dummies {
     using namespace std::literals;
 
-    auto to_int(std::string_view sv) -> computoc::Expected<int, std::string>
+    auto to_int(std::string_view sv) -> oc::Expected<int, std::string>
     {
         int r{};
         auto [ptr, ec] { std::from_chars(sv.data(), sv.data() + sv.size(), r) };
         if (ec == std::errc()) {
             return r;
         }
-        return computoc::Unexpected{ "Null"s };
+        return oc::Unexpected{ "Null"s };
     };
 
     auto inc(int n)
@@ -123,9 +123,9 @@ namespace expected_test_dummies {
         return n + 1;
     }
 
-    auto get_failure(const std::string&) -> computoc::Expected<int, std::string>
+    auto get_failure(const std::string&) -> oc::Expected<int, std::string>
     {
-        return computoc::Unexpected{ "conversion failed"s };
+        return oc::Unexpected{ "conversion failed"s };
     }
 
     auto decorate_as_error(const std::string& s)
@@ -137,7 +137,7 @@ namespace expected_test_dummies {
 TEST(Expected_test, using_Expected_with_value_and_error)
 {
     using namespace expected_test_dummies;
-    using namespace computoc;
+    using namespace oc;
 
     std::vector<Expected<std::string, std::string>> input = {
         "1234", "15 foo", "bar", "42", "5000000000", " 5" };

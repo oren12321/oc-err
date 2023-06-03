@@ -1,5 +1,5 @@
-#ifndef ERROC_ERRORS_H
-#define ERROC_ERRORS_H
+#ifndef OC_ERR_H
+#define OC_ERR_H
 
 #include <variant>
 #include <string>
@@ -7,7 +7,7 @@
 #include <utility>
 #include <stdexcept>
 
-namespace computoc {
+namespace oc {
     namespace details {
         inline std::string make_error_msg(const char* failed_cond, const char* exception_type, int line, const char* func, const char* file, const std::string& desc = std::string{})
         {
@@ -22,21 +22,20 @@ namespace computoc {
 }
 
 #ifdef __unix__
-#define _REQUIRE(condition, exception_type, ...) \
+#define OCERR_REQUIRE(condition, exception_type, ...) \
     if(!(condition)) { \
-        std::string msg = computoc::details::make_error_msg(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__ __VA_OPT__(, __VA_ARGS__)); \
+        std::string msg = oc::details::make_error_msg(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__ __VA_OPT__(, __VA_ARGS__)); \
         throw exception_type(msg); \
     }
 #elif defined(_WIN32) || defined(_WIN64)
-#define _REQUIRE(condition, exception_type, ...) \
+#define OCERR_REQUIRE(condition, exception_type, ...) \
     if(!(condition)) { \
-        std::string msg = computoc::details::make_error_msg(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__, __VA_ARGS__); \
+        std::string msg = oc::details::make_error_msg(#condition, #exception_type, __LINE__, __FUNCTION__, __FILE__, __VA_ARGS__); \
         throw exception_type(msg); \
     }
 #endif
 
-namespace computoc {
-
+namespace oc {
     namespace details {
         using None_option = std::monostate;
 
@@ -301,5 +300,5 @@ namespace computoc {
     using details::None_option;
 }
 
-#endif // ERROC_ERRORS_H
+#endif // OC_ERR_H
 
