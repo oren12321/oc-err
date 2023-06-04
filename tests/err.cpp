@@ -48,19 +48,14 @@ TEST_F(Require_test, throws_an_exception_with_specific_format)
 }
 
 namespace optional_test_dummies {
-    template <typename T>
-    using Optional = oc::Expected<T>;
-
-    constexpr oc::None_option nullopt{};
-
-    auto to_int(std::string_view sv) -> Optional<int>
+    auto to_int(std::string_view sv) -> oc::optional<int>
     {
         int r{};
         auto [ptr, ec] { std::from_chars(sv.data(), sv.data() + sv.size(), r) };
         if (ec == std::errc()) {
             return r;
         }
-        return nullopt;
+        return oc::nullopt;
     };
 
     auto inc(int n)
@@ -73,17 +68,17 @@ namespace optional_test_dummies {
         return std::to_string(n);
     }
 
-    auto get_null_opt() -> Optional<std::string>
+    auto get_null_opt() -> oc::optional<std::string>
     {
         return "Null";
     }
 }
 
-TEST(Expected_test, using_Expected_type_as_Optional)
+TEST(expected_test, using_expected_type_as_optional)
 {
     using namespace optional_test_dummies;
 
-    std::vector<Optional<std::string>> input = {
+    std::vector<oc::optional<std::string>> input = {
         "1234", "15 foo", "bar", "42", "5000000000", " 5" };
 
     std::vector<std::string> results = {
@@ -108,14 +103,14 @@ TEST(Expected_test, using_Expected_type_as_Optional)
 namespace expected_test_dummies {
     using namespace std::literals;
 
-    auto to_int(std::string_view sv) -> oc::Expected<int, std::string>
+    auto to_int(std::string_view sv) -> oc::expected<int, std::string>
     {
         int r{};
         auto [ptr, ec] { std::from_chars(sv.data(), sv.data() + sv.size(), r) };
         if (ec == std::errc()) {
             return r;
         }
-        return oc::Unexpected{ "Null"s };
+        return oc::unexpected{ "Null"s };
     };
 
     auto inc(int n)
@@ -123,9 +118,9 @@ namespace expected_test_dummies {
         return n + 1;
     }
 
-    auto get_failure(const std::string&) -> oc::Expected<int, std::string>
+    auto get_failure(const std::string&) -> oc::expected<int, std::string>
     {
-        return oc::Unexpected{ "conversion failed"s };
+        return oc::unexpected{ "conversion failed"s };
     }
 
     auto decorate_as_error(const std::string& s)
@@ -134,12 +129,12 @@ namespace expected_test_dummies {
     }
 }
 
-TEST(Expected_test, using_Expected_with_value_and_error)
+TEST(expected_test, using_expected_with_value_and_error)
 {
     using namespace expected_test_dummies;
     using namespace oc;
 
-    std::vector<Expected<std::string, std::string>> input = {
+    std::vector<expected<std::string, std::string>> input = {
         "1234", "15 foo", "bar", "42", "5000000000", " 5" };
 
     std::vector<int> successful_results = { 1235, 16, 0, 43, 0, 0 };

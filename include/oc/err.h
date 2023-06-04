@@ -37,24 +37,24 @@ namespace oc {
 
 namespace oc {
     namespace details {
-        using None_option = std::monostate;
+        using nullopt_t = std::monostate;
 
-        template <typename T = None_option>
-        class Unexpected {
+        template <typename T = nullopt_t>
+        class unexpected {
         public:
-            constexpr Unexpected(const T& value = None_option{})
+            constexpr unexpected(const T& value = nullopt_t{})
                 : value_(value)
             {
             }
-            constexpr Unexpected(T&& value) noexcept
+            constexpr unexpected(T&& value) noexcept
                 : value_(std::move(value))
             {
             }
-            constexpr Unexpected(const Unexpected&) = default;
-            constexpr Unexpected& operator=(const Unexpected&) = default;
-            constexpr Unexpected(Unexpected&&) = default;
-            constexpr Unexpected& operator=(Unexpected&&) = default;
-            ~Unexpected() = default;
+            constexpr unexpected(const unexpected&) = default;
+            constexpr unexpected& operator=(const unexpected&) = default;
+            constexpr unexpected(unexpected&&) = default;
+            constexpr unexpected& operator=(unexpected&&) = default;
+            ~unexpected() = default;
 
             [[nodiscard]] constexpr const T& value() const noexcept
             {
@@ -65,39 +65,38 @@ namespace oc {
             T value_;
         };
 
-        template <typename T, typename E = None_option>
-        //requires (!std::is_same_v<None_option, T>)
-        class Expected {
+        template <typename T, typename E = nullopt_t>
+        class expected {
         public:
             template <typename U = T>
-            constexpr Expected(const U& value)
+            constexpr expected(const U& value)
                 : opts_(value)
             {
             }
             template <typename U = T>
-            constexpr Expected(U&& value) noexcept
+            constexpr expected(U&& value) noexcept
                 : opts_(std::move(value))
             {
             }
 
             template <typename U = E>
-            constexpr Expected(const Unexpected<U>& error)
+            constexpr expected(const unexpected<U>& error)
                 : opts_(error)
             {
             }
             template <typename U = E>
-            constexpr Expected(Unexpected<U>&& error) noexcept
+            constexpr expected(unexpected<U>&& error) noexcept
                 : opts_(std::move(error))
             {
             }
 
-            constexpr Expected(const Expected& other) = default;
-            constexpr Expected& operator=(const Expected& other) = default;
+            constexpr expected(const expected& other) = default;
+            constexpr expected& operator=(const expected& other) = default;
 
-            constexpr Expected(Expected&& other) = default;
-            constexpr Expected& operator=(Expected&& other) = default;
+            constexpr expected(expected&& other) = default;
+            constexpr expected& operator=(expected&& other) = default;
 
-            constexpr ~Expected() = default;
+            constexpr ~expected() = default;
 
             [[nodiscard]] explicit constexpr operator bool() const noexcept
             {
@@ -138,7 +137,7 @@ namespace oc {
                 if (opts_.index() == 0) {
                     throw std::runtime_error("error is not present");
                 }
-                return std::get<Unexpected<E>>(opts_).value();
+                return std::get<unexpected<E>>(opts_).value();
             }
 
             template <typename U>
@@ -158,7 +157,7 @@ namespace oc {
                 if (opts_.index() == 0) {
                     return op(value());
                 }
-                return decltype(op(value()))(Unexpected(error()));
+                return decltype(op(value()))(unexpected(error()));
             }
 
             template <typename Unary_op>
@@ -176,7 +175,7 @@ namespace oc {
                 if (opts_.index() == 0) {
                     return op();
                 }
-                return decltype(op())(Unexpected(error()));
+                return decltype(op())(unexpected(error()));
             }
 
             template <typename Unary_op>
@@ -211,31 +210,32 @@ namespace oc {
             [[nodiscard]] constexpr auto transform(Unary_op&& op) const
             {
                 if (opts_.index() == 0) {
-                    return Expected<decltype(op(value())), E>(op(value()));
+                    return expected<decltype(op(value())), E>(op(value()));
                 }
-                return Expected<decltype(op(value())), E>(error());
+                return expected<decltype(op(value())), E>(error());
             }
 
             template <typename Unary_op>
             [[nodiscard]] constexpr auto transform_error(Unary_op&& op) const
+                requires (!std::is_same_v<E, nullopt_t>)
             {
                 if (opts_.index() == 0) {
-                    return Expected<T, decltype(op(error()))>(value());
+                    return expected<T, decltype(op(error()))>(value());
                 }
-                return Expected<T, decltype(op(error()))>(op(error()));
+                return expected<T, decltype(op(error()))>(op(error()));
             }
 
         private:
-            constexpr Expected() noexcept
-                : Expected(None_option{})
+            constexpr expected() noexcept
+                : expected(nullopt_t{})
             {
             }
 
-            std::variant<T, Unexpected<E>> opts_;
+            std::variant<T, unexpected<E>> opts_;
         };
 
         template <typename T1, typename E1, typename T2, typename E2>
-        [[nodiscard]] inline constexpr bool operator==(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
+        [[nodiscard]] inline constexpr bool operator==(const expected<T1, E1>& lhs, const expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
@@ -245,7 +245,7 @@ namespace oc {
         }
 
         template <typename T1, typename E1, typename T2, typename E2>
-        [[nodiscard]] inline constexpr bool operator!=(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
+        [[nodiscard]] inline constexpr bool operator!=(const expected<T1, E1>& lhs, const expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return true;
@@ -255,7 +255,7 @@ namespace oc {
         }
 
         template <typename T1, typename E1, typename T2, typename E2>
-        [[nodiscard]] inline constexpr bool operator<(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
+        [[nodiscard]] inline constexpr bool operator<(const expected<T1, E1>& lhs, const expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
@@ -265,7 +265,7 @@ namespace oc {
         }
 
         template <typename T1, typename E1, typename T2, typename E2>
-        [[nodiscard]] inline constexpr bool operator<=(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
+        [[nodiscard]] inline constexpr bool operator<=(const expected<T1, E1>& lhs, const expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
@@ -275,7 +275,7 @@ namespace oc {
         }
 
         template <typename T1, typename E1, typename T2, typename E2>
-        [[nodiscard]] inline constexpr bool operator>(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
+        [[nodiscard]] inline constexpr bool operator>(const expected<T1, E1>& lhs, const expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
@@ -285,7 +285,7 @@ namespace oc {
         }
 
         template <typename T1, typename E1, typename T2, typename E2>
-        [[nodiscard]] inline constexpr bool operator>=(const Expected<T1, E1>& lhs, const Expected<T2, E2>& rhs)
+        [[nodiscard]] inline constexpr bool operator>=(const expected<T1, E1>& lhs, const expected<T2, E2>& rhs)
         {
             if (static_cast<bool>(lhs) != static_cast<bool>(rhs)) {
                 return false;
@@ -293,11 +293,18 @@ namespace oc {
 
             return lhs ? (lhs.value() >= rhs.value()) : (lhs.error() >= rhs.error());
         }
+
+        template <typename T>
+        using optional = expected<T>;
+
+        inline constexpr nullopt_t nullopt{};
     }
 
-    using details::Unexpected;
-    using details::Expected;
-    using details::None_option;
+    using details::unexpected;
+    using details::expected;
+    using details::nullopt_t;
+    using details::optional;
+    using details::nullopt;
 }
 
 #endif // OC_ERR_H
